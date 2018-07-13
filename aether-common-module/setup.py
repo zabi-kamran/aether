@@ -42,7 +42,7 @@ setup(
 
     python_requires='>=3.6',
     install_requires=[
-        'django<2',
+        'django',
         'django-cors-headers',
         'django-debug-toolbar',
         'django-prometheus',
