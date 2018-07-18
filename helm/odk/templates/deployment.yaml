@@ -55,7 +55,23 @@ spec:
           name: odk-init
         - name: {{ .Chart.Name }}
           mountPath: {{ .Values.application.data_mount }}
+        {{ if .Values.provider.gcp }}
+        - name: cloudsql-instance-credentials
+          mountPath: /secrets/cloudsql
+          readOnly: true
+        {{ end }}
       containers:
+      {{ if .Values.provider.gcp }}
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        command: ["/cloud_sql_proxy",
+                  "-instances={{ .Values.database.instance }}=tcp:5432",
+                  "-credential_file=/secrets/cloudsql/credentials.json"]
+        volumeMounts:
+          - name: cloudsql-instance-credentials
+            mountPath: /secrets/cloudsql
+            readOnly: true
+      {{ end }}
       - name: {{ .Chart.Name }}
         image: "{{ .Values.odk.repository }}:{{ .Values.release }}"
         ports:
@@ -198,4 +214,9 @@ spec:
         hostPath:
           path: /aether/aether-odk-module
       {{ end }}
+      {{ if .Values.provider.gcp }}
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-instance-credentials
       restartPolicy: Always
+      {{ end }}

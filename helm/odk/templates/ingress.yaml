@@ -19,6 +19,9 @@ spec:
     {{- range .Values.ingress.hosts }}
     - {{ . }}
     {{- end }}
+    {{ if not .Values.ingress.certsecret|empty -}}
+    secretName: {{ .Values.ingress.certsecret -}}
+    {{ end }}
   rules:
     {{- range $host := .Values.ingress.hosts }}
     - host: {{ $host }}
