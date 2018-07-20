@@ -1,23 +1,19 @@
-apiVersion: apps/v1beta2
+apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: {{ .Release.Name }}
+  name: {{ .Chart.Name }}
   labels:
-    app: {{ .Release.Name }}
-    chart: {{ template "ui.chart" . }}
-    release: {{ .Release.Name }}
+    app: {{ .Chart.Name }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+    release: {{ .Chart.Version }}
     heritage: {{ .Release.Service }}
 spec:
   replicas: {{ .Values.replicaCount }}
-  selector:
-    matchLabels:
-      app: {{ .Release.Name }}
-      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: {{ .Release.Name }}
-        release: {{ .Release.Name }}
+        app: {{ .Chart.Name }}
+        release: {{ .Chart.Version }}
     spec:
       initContainers:
       - name: init
@@ -27,97 +23,222 @@ spec:
         - name: PGHOST
           valueFrom :
             secretKeyRef:
-              name: database-credentials
+              name: {{ .Values.database.secret }}
               key: host
         - name: PGUSER
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: {{ .Values.database.secret }}
               key: user
         - name: PGPASSWORD
           valueFrom:
             secretKeyRef:
-              name: database-credentials
+              name: {{ .Values.database.secret }}
               key: password
-        - name: DB_NAME
-          value: {{ .Values.app.rdsDbName }}
         - name: DB_USERNAME
-          value: {{ .Values.app.rdsDbUser }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-user
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: {{ .Values.app.secrets }}
+              name: {{ .Values.application.secret }}
               key: ui-database-password
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-name
         volumeMounts:
         - mountPath: /scripts
-          name: init-config
-        - mountPath: /media
-          name: {{ .Chart.Name }}
+          name: ui-init
+        - name: {{ .Chart.Name }}
+          mountPath: {{ .Values.application.data_mount }}
+        {{ if .Values.provider.gcp }}
+        - name: cloudsql-instance-credentials
+          mountPath: /secrets/cloudsql
+          readOnly: true
+        {{ end }}
       containers:
-        - name: nginx
-          image: nginx:stable-alpine
-          ports:
-          - containerPort: 80
-          volumeMounts:
-          - mountPath: /var/www/static
-            name: static-assets-volume
-          - mountPath: /etc/nginx/conf.d
-            name: nginx-config
-          - mountPath: /media
-            name: {{ .Chart.Name }}
-        - name: ui
-          image: "{{ .Values.image.repository }}:{{ .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.pullPolicy }}
-          args:
-          - {{ .Values.app.command }}
-          ports:
-            - name: http
-              containerPort: {{ quote .Values.app.port }}
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /health
-              port: http
-          env:
-          - name: DJANGO_SECRET_KEY
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.app.secrets }}
-                key: ui-django-secret-key
-          - name: ADMIN_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.app.secrets }}
-                key: ui-django-admin-password
-          - name: PGPASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: {{ .Values.app.secrets }}
-                key: ui-database-password
-          - name: PGHOST
-            value: {{ .Values.app.rdsDbHost }}
-          - name: PGUSER
-            value: {{ .Values.app.rdsDbUser }}
-          - name: DB_NAME
-            value: {{ .Values.app.rdsDbName }}
-          - name: AETHER_KERNEL_URL
-            value: {{ .Values.app.kernelUrl }}
-          - name: DEBUG
-            value: {{ if .Values.debug }}"1"{{ else }}""{{ end }}
-          - name: WEB_SERVER_PORT
-            value: {{ quote .Values.app.port }}
+      {{ if .Values.provider.gcp }}
+      - name: cloudsql-proxy
+        image: gcr.io/cloudsql-docker/gce-proxy:1.11
+        command: ["/cloud_sql_proxy",
+                  "-instances={{ .Values.database.instance }}=tcp:5432",
+                  "-credential_file=/secrets/cloudsql/credentials.json"]
+        volumeMounts:
+          - name: cloudsql-instance-credentials
+            mountPath: /secrets/cloudsql
+            readOnly: true
+      {{ end }}
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.odk.repository }}:{{ .Values.release }}"
+        ports:
+        - containerPort: 8000
+        args:
+        - {{ .Values.application.command }}
+        livenessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          httpGet:
+            path: /health
+            port: 8000
+            httpHeaders:
+            - name: X-Kubernetes-Health-Check
+              value: livenessProbe
+            - name: Host
+              value: {{ .Values.url }}
+        readinessProbe:
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          httpGet:
+            path: /health
+            port: 8000
+            httpHeaders:
+            - name: X-Kubernetes-Health-Check
+              value: check
+            - name: Host
+              value: {{ .Values.url }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        {{- if .Values.extra_env_vars -}}
+        {{- range $key, $value := .Values.extra_env_vars }}
+        - name: {{ $key }}
+          value: {{ . | quote }}
+        {{- end -}}
+        {{ end }}
+        - name: MEDIA_ROOT
+          value: {{ .Values.application.data_mount }}
+        - name: CAS_SERVER_URL
+          value: "https://{{ .Values.ums_url }}.ehealthafrica.org"
+        - name: CSRF_COOKIE_DOMAIN
+          value: {{ .Values.domain }}
+        - name: CSRF_TRUSTED_ORIGINS
+          value: {{ .Values.trusted_origins }}
+        - name: HOSTNAME
+          value: "{{ .Values.url_prefix }}.{{ .Values.domain }}"
+        - name: DJANGO_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-django-secret-key
+        - name: ADMIN_USERNAME
+          value: {{ .Values.application.admin_user }}
+        - name: ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-admin-password
+        - name: ADMIN_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-token
+        - name: AETHER_KERNEL_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: kernel-token
+        - name: AETHER_KERNEL_URL
+          value: {{ .Values.kernel_url }}
+        - name: AETHER_KERNEL_URL_TEST
+          value: {{ .Values.kernel_url_test }}
+        - name: TESTING
+          value: {{ quote .Values.testing }}
+        - name: PGUSER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-user
+        - name: PGPORT
+          value: "5432"
+        - name: PGHOST
+          valueFrom :
+            secretKeyRef:
+              name: {{ .Values.database.secret }}
+              key: host
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-password
+
+        - name: RDS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-user
+        - name: RDS_HOSTNAME
+          valueFrom :
+            secretKeyRef:
+              name: {{ .Values.database.secret }}
+              key: host
+        - name: RDS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-password
+        - name: RDS_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-name
+
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: ui-database-name
+        # `WEB_SERVER_PORT` is kept around for compatibility with the old tests,
+        # which are using different ports in different environments. Once all
+        # tests have been updated to run inside the cluster, `WEB_SERVER_PORT`
+        # can be removed.
+        - name: WEB_SERVER_PORT
+          value: {{ quote .Values.webserverPort }}
+        volumeMounts:
+        - mountPath: /var/www/static
+          name: static-assets-volume
+        - name: {{ .Chart.Name }}
+          mountPath: {{ .Values.application.data_mount }}
+        {{ if .Values.liveEdit.enabled }}
+        - name: code
+          mountPath: /code
+        {{ end }}
+      - name: nginx
+        image: nginx:stable-alpine
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - mountPath: /var/www/static
+          name: static-assets-volume
+        - mountPath: /etc/nginx/conf.d
+          name: ui-nginx-config
+        - name: {{ .Chart.Name }}
+          mountPath: {{ .Values.application.data_mount }}
+      imagePullSecrets:
+      - name: regsecret
       volumes:
       - name: {{ .Chart.Name }}
+        persistentVolumeClaim:
+          claimName: {{ .Chart.Name }}
       - name: static-assets-volume
         emptyDir: {}
-      - name: nginx-config
+      - name: ui-nginx-config
         configMap:
-          name: {{ .Release.Name }}-nginx-config
-      - name: init-config
+          name: ui-nginx-config
+      - name: ui-init
         configMap:
-          name: {{ .Release.Name }}-init-config
+          name: ui-init
           defaultMode: 0744
+      {{ if .Values.liveEdit.enabled }}
+      - name: code
+        hostPath:
+          path: /aether/aether-ui-module
+      {{ end }}
+      {{ if .Values.provider.gcp }}
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-instance-credentials
+      restartPolicy: Always
+      {{ end }}

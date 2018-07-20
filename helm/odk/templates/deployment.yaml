@@ -130,7 +130,7 @@ spec:
             secretKeyRef:
               name: {{ .Values.application.secret }}
               key: odk-admin-password
-        - name: ADMIN_TOKEN
+        - name: AETHER_ODK_TOKEN
           valueFrom:
             secretKeyRef:
               name: {{ .Values.application.secret }}
@@ -168,6 +168,28 @@ spec:
             secretKeyRef:
               name: {{ .Values.application.secret }}
               key: odk-database-name
+        - name: RDS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: odk-database-user
+        - name: RDS_HOSTNAME
+          valueFrom :
+            secretKeyRef:
+              name: {{ .Values.database.secret }}
+              key: host
+        - name: RDS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: odk-database-password
+        - name: RDS_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: odk-database-name
+        - name: RDS_PORT
+          value: "5432"
         # `WEB_SERVER_PORT` is kept around for compatibility with the old tests,
         # which are using different ports in different environments. Once all
         # tests have been updated to run inside the cluster, `WEB_SERVER_PORT`
@@ -218,5 +240,5 @@ spec:
       - name: cloudsql-instance-credentials
         secret:
           secretName: cloudsql-instance-credentials
-      restartPolicy: Always
       {{ end }}
+      restartPolicy: Always

@@ -124,7 +124,7 @@ spec:
             secretKeyRef:
               name: {{ .Values.application.secret }}
               key: kernel-admin-password
-        - name: ADMIN_TOKEN
+        - name: AETHER_KERNEL_TOKEN
           valueFrom:
             secretKeyRef:
               name: {{ .Values.application.secret }}
@@ -151,6 +151,28 @@ spec:
             secretKeyRef:
               name: {{ .Values.application.secret }}
               key: kernel-database-name
+        - name: RDS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: kernel-database-user
+        - name: RDS_HOSTNAME
+          valueFrom :
+            secretKeyRef:
+              name: {{ .Values.database.secret }}
+              key: host
+        - name: RDS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: kernel-database-password
+        - name: RDS_DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.application.secret }}
+              key: kernel-database-name
+        - name: RDS_PORT
+          value: "5432"
         - name: TESTING
           value: {{ quote .Values.testing }}
         # `WEB_SERVER_PORT` is kept around for compatibility with the old tests,

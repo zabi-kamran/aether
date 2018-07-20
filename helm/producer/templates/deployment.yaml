@@ -1,0 +1,129 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ template "producer.fullname" . }}
+  labels:
+    app: {{ template "producer.name" . }}
+    chart: {{ template "producer.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ template "producer.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "producer.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        {{ if .Values.provider.gcp }}
+        - name: cloudsql-proxy
+          image: gcr.io/cloudsql-docker/gce-proxy:1.11
+          command: ["/cloud_sql_proxy",
+                    "-instances={{ .Values.database.instance }}=tcp:5432",
+                    "-credential_file=/secrets/cloudsql/credentials.json"]
+          volumeMounts:
+            - name: cloudsql-instance-credentials
+              mountPath: /secrets/cloudsql
+              readOnly: true
+        {{ end }}
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+          - {{ .Values.application.command }}
+          env:
+          - name: DEBUG
+            value:  {{ quote .Values.debug }}
+          - name: PRODUCER_SETTINGS_FILE
+            value:  {{ quote .Values.application.config }}
+          - name: PGUSER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.application.secret }}
+                key: kernel-database-user
+          - name: PGPORT
+            value: "5432"
+          - name: PGHOST
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.database.secret }}
+                key: host
+          - name: PGPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.application.secret }}
+                key: kernel-database-password
+          - name: DB_NAME
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.application.secret }}
+                key: kernel-database-name
+          livenessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            httpGet:
+              path: /health
+              port: 8000
+              httpHeaders:
+              - name: X-Kubernetes-Health-Check
+                value: livenessProbe
+              - name: Host
+                value: {{ .Values.url }}
+          readinessProbe:
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            httpGet:
+              path: /health
+              port: 8000
+              httpHeaders:
+              - name: X-Kubernetes-Health-Check
+                value: check
+              - name: Host
+                value: {{ .Values.url }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          resources:
+          volumeMounts:
+            - name: producer-config
+              mountPath: /etc/producer
+              readOnly: true
+      imagePullSecrets:
+      - name: regsecret
+      volumes:
+      - name: {{ .Chart.Name }}
+        persistentVolumeClaim:
+          claimName: {{ .Chart.Name }}
+      - name: producer-config
+        configMap:
+          name: producer-config
+          defaultMode: 0744
+          items:
+          - key: config.json
+            path: config.json
+
+    {{- if .Values.provider.gcp }}
+      - name: cloudsql-instance-credentials
+        secret:
+          secretName: cloudsql-instance-credentials
+    {{- end }}
+      resources:
+{{ toYaml .Values.resources | indent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
