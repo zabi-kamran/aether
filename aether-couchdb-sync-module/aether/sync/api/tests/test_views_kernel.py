@@ -24,6 +24,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
+
 from ..kernel_utils import KernelPropagationError
 from ..models import Project, Schema
 
@@ -37,6 +40,7 @@ class KernelViewsTests(TestCase):
         email = 'test@example.com'
         password = 'testtest'
         self.user = get_user_model().objects.create_user(username, email, password)
+        auth_callback(None, self.user, {'roles': 'a'})
         self.assertTrue(self.client.login(username=username, password=password))
 
     def tearDown(self):
@@ -49,6 +53,7 @@ class KernelViewsTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
         project = Project.objects.create(name='sample')
+        assign_permissions(group_names=['a'], instance=project)
         url = reverse('api:project-propagate', kwargs={'pk': project.pk})
 
         with mock.patch('aether.sync.api.views.propagate_kernel_project',
@@ -73,6 +78,7 @@ class KernelViewsTests(TestCase):
             project=Project.objects.create(name='sample'),
             avro_schema={},
         )
+        assign_permissions(group_names=['a'], instance=schema)
         url = reverse('api:schema-propagate', kwargs={'pk': schema.pk})
 
         with mock.patch('aether.sync.api.views.propagate_kernel_artefacts',

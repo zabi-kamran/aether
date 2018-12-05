@@ -17,14 +17,30 @@
 # under the License.
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
+
+from guardian.shortcuts import get_perms_for_model
+
+from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
 
 from . import CustomTestCase
 from ..models import Project, XForm, MediaFile
 
 
 class ModelsTests(CustomTestCase):
+
+    def assert_has_permissions(self, user, instance):
+        for permission in get_perms_for_model(instance):
+            has_permission = user.has_perm(permission.codename, instance)
+            self.assertTrue(has_permission, permission.codename)
+
+    def assert_has_no_permissions(self, user, instance):
+        for permission in get_perms_for_model(instance):
+            has_permission = user.has_perm(permission.codename, instance)
+            self.assertFalse(has_permission, permission.codename)
 
     def test__xform__create__raises_errors(self):
         # missing required fields
@@ -203,3 +219,29 @@ class ModelsTests(CustomTestCase):
         self.assertNotEqual(last_version, xform.version, 'changed xml data')
         self.assertNotEqual(last_avro_schema, xform.avro_schema, 'changed AVRO schema')
         self.assertNotEqual(last_kernel_id, xform.kernel_id, 'changed Kernel ID')
+
+    def test_permissions(self):
+        '''
+        Assert that all models which have a foreign key relationship to a
+        Project will inherit that project's permissions.
+        '''
+        user = get_user_model().objects.create(
+            username='test',
+            password='testtest',
+        )
+        roles = 'a-group'
+        auth_callback(None, user, {'roles': roles})
+        project = Project.objects.create()
+        self.assert_has_no_permissions(user, project)
+        assign_permissions([roles], project)
+        self.assert_has_permissions(user, project)
+        xform = XForm.objects.create(
+            project=project,
+            xml_data=self.samples['xform']['xml-ok'],
+        )
+        self.assert_has_permissions(user, xform)
+        media_file = MediaFile.objects.create(
+            xform=xform,
+            media_file=SimpleUploadedFile('sample.txt', b'abc'),
+        )
+        self.assert_has_permissions(user, media_file)

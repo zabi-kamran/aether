@@ -47,6 +47,7 @@ class PaginationTests(TestCase):
             serializer_class=PassThroughSerializer,
             queryset=range(1, self.count + 1),
             pagination_class=CustomPagination,
+            filter_backends=(),
         )
 
     def test_default_settings(self):

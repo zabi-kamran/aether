@@ -23,7 +23,10 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, TestCase
+
+from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
 
 from . import (PIPELINE_EXAMPLE, PIPELINE_EXAMPLE_WITH_ERRORS,
                CONTRACT_EXAMPLE, CONTRACT_EXAMPLE_WITH_ERRORS)
@@ -56,15 +59,16 @@ ENTITY_SAMPLE = {
     ],
 }
 
-
-class ViewsTest(TransactionTestCase):
+class ViewsTest(TestCase):
 
     def setUp(self):
         username = 'test'
         email = 'test@example.com'
         password = 'testtest'
-        get_user_model().objects.create_user(username, email, password)
+        user = get_user_model().objects.create_user(username, email, password)
+        self.user = user
         self.assertTrue(self.client.login(username=username, password=password))
+        auth_callback(None, user, {'roles': 'a'})
 
         # save the list of project and schema ids created by the test
         # to remove them in the tearDown method
@@ -143,6 +147,7 @@ class ViewsTest(TransactionTestCase):
         url = reverse('pipeline-fetch')
         response = self.client.post(url, content_type='application/json')
         response_data = json.loads(response.content)
+
         self.assertEqual(len(response_data), 1, response_data)
         self.assertEqual(len(response_data[0]['contracts'][0]['entity_types']), 2)
         self.assertEqual(Pipeline.objects.count(), 1)
@@ -169,8 +174,10 @@ class ViewsTest(TransactionTestCase):
     def test__pipeline__and__contract__viewsets(self):
         url = reverse('pipeline-list')
         data = json.dumps({'name': 'Pipeline'})
+        import guardian.shortcuts as gs
         response = self.client.post(url, data=data, content_type='application/json')
         response_data = json.loads(response.content)
+
         pipeline_id = response_data['id']
         self.assertEqual(response_data['name'], 'Pipeline')
 
@@ -180,6 +187,8 @@ class ViewsTest(TransactionTestCase):
         data = json.dumps({'input': {'id': 1}})
         response = self.client.patch(url_patch, data=data, content_type='application/json')
         response_data = json.loads(response.content)
+        from aether.ui.api.models import Pipeline
+        pipelines = Pipeline.objects.all()
         self.assertEqual(response_data['name'], 'Pipeline', 'Preserves name')
         self.assertEqual(response_data['input'], {'id': 1}, 'Sets input')
 
@@ -204,6 +213,7 @@ class ViewsTest(TransactionTestCase):
             name='Pipeline test',
             input=INPUT_SAMPLE
         )
+        assign_permissions(group_names=['a'], instance=pipeline)
         contract = Contract.objects.create(
             entity_types=[ENTITY_SAMPLE],
             mapping=[
@@ -213,6 +223,7 @@ class ViewsTest(TransactionTestCase):
             pipeline=pipeline,
             is_read_only=True,
         )
+        assign_permissions(group_names=['a'], instance=contract)
         url = reverse('pipeline-detail', kwargs={'pk': str(pipeline.pk)})
         INPUT_SAMPLE['weight'] = 45
         data = {
@@ -389,6 +400,7 @@ class ViewsTest(TransactionTestCase):
             },
             input={'test': {'name': 'myValue'}},
         )
+        assign_permissions(group_names=['a'], instance=pipeline)
         contract = Contract.objects.create(
             name='Contract Test',
             pipeline=pipeline,
@@ -405,6 +417,7 @@ class ViewsTest(TransactionTestCase):
                 {'source': 'test.name', 'destination': 'Test.name'},
             ],
         )
+        assign_permissions(group_names=['a'], instance=contract)
 
         pipeline_id = str(pipeline.id)
         contract_id = str(contract.id)
@@ -435,6 +448,7 @@ class ViewsTest(TransactionTestCase):
             input=INPUT_SAMPLE,
             schema=ENTITY_SAMPLE,
         )
+        assign_permissions(group_names=['a'], instance=pipeline)
         contract = Contract.objects.create(
             name='Contract Exception',
             pipeline=pipeline,
@@ -444,6 +458,7 @@ class ViewsTest(TransactionTestCase):
                 {'source': '$.surname', 'destination': 'Person.firstName'},
             ],
         )
+        assign_permissions(group_names=['a'], instance=contract)
 
         url = reverse('pipeline-publish', args=[str(pipeline.id)])
         with mock.patch('aether.ui.api.utils.publish_contract', side_effect={'error': 'test error'}) as m:
@@ -460,6 +475,7 @@ class ViewsTest(TransactionTestCase):
             name='Pipeline 2 Exception',
             input=INPUT_SAMPLE,
         )
+        assign_permissions(group_names=['a'], instance=pipeline)
         contract = Contract.objects.create(
             name='Contract Exception 2',
             pipeline=pipeline,
@@ -469,6 +485,7 @@ class ViewsTest(TransactionTestCase):
                 {'source': '$.surname', 'destination': 'Person.firstName'},
             ],
         )
+        assign_permissions(group_names=['a'], instance=contract)
 
         pipeline_id = str(pipeline.id)
         contract_id = str(contract.id)

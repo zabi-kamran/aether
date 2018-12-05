@@ -22,6 +22,7 @@ import urllib
 
 from django.utils.translation import ugettext as _
 from drf_dynamic_fields import DynamicFieldsMixin
+from guardian.shortcuts import get_groups_with_perms
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
@@ -37,6 +38,13 @@ MERGE_CHOICES = (
     (MERGE_OPTIONS.fww.value, _('First Write Wins (Source to Target)'))
 )
 DEFAULT_MERGE = MERGE_OPTIONS.overwrite.value
+
+
+class GroupsWithPermissionsMixin(serializers.ModelSerializer):
+    groups_with_permissions = serializers.SerializerMethodField()
+
+    def get_groups_with_permissions(self, obj):
+        return [str(group) for group in get_groups_with_perms(obj)]
 
 
 class FilteredHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
@@ -73,7 +81,9 @@ class FilteredHyperlinkedRelatedField(serializers.HyperlinkedRelatedField):
         return result
 
 
-class ProjectSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class ProjectSerializer(GroupsWithPermissionsMixin,
+                        DynamicFieldsMixin,
+                        serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         read_only=True,
         view_name='project-detail',
@@ -96,7 +106,9 @@ class ProjectSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class MappingSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class MappingSerializer(GroupsWithPermissionsMixin,
+                        DynamicFieldsMixin,
+                        serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         read_only=True,
         view_name='mapping-detail',
@@ -119,7 +131,9 @@ class MappingSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class MappingSetSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class MappingSetSerializer(GroupsWithPermissionsMixin,
+                           DynamicFieldsMixin,
+                           serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         read_only=True,
         view_name='mappingset-detail',
@@ -147,7 +161,9 @@ class MappingSetSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AttachmentSerializerNested(DynamicFieldsMixin, serializers.ModelSerializer):
+class AttachmentSerializerNested(GroupsWithPermissionsMixin,
+                                 DynamicFieldsMixin,
+                                 serializers.ModelSerializer):
     name = serializers.CharField(read_only=True)
     url = serializers.CharField(read_only=True, source='attachment_file_url')
 
@@ -156,7 +172,9 @@ class AttachmentSerializerNested(DynamicFieldsMixin, serializers.ModelSerializer
         fields = ('name', 'url')
 
 
-class SubmissionSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class SubmissionSerializer(GroupsWithPermissionsMixin,
+                           DynamicFieldsMixin,
+                           serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='submission-detail',
         read_only=True
@@ -203,7 +221,9 @@ class SubmissionSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class AttachmentSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class AttachmentSerializer(GroupsWithPermissionsMixin,
+                           DynamicFieldsMixin,
+                           serializers.ModelSerializer):
     name = serializers.CharField(allow_null=True, default=None)
     submission_revision = serializers.CharField(allow_null=True, default=None)
 
@@ -219,8 +239,19 @@ class AttachmentSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         model = models.Attachment
         fields = '__all__'
 
+from guardian.shortcuts import *
 
-class SchemaSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class ProjectPKField(serializers.PrimaryKeyRelatedField):
+    def get_queryset(self):
+        user = self.context['request'].user
+        # queryset = models.Project.objects.filter(user=user)
+        objs = get_objects_for_user(user, perms=[], klass=models.Project)
+        # import ipdb; ipdb.set_trace()
+        return objs
+
+class SchemaSerializer(GroupsWithPermissionsMixin,
+                       DynamicFieldsMixin,
+                       serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='schema-detail',
         read_only=True,
@@ -231,13 +262,16 @@ class SchemaSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         source='projectschemas',
         view_name='projectschema-list',
     )
+    # project = ProjectPKField()
 
     class Meta:
         model = models.Schema
         fields = '__all__'
 
 
-class ProjectSchemaSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class ProjectSchemaSerializer(GroupsWithPermissionsMixin,
+                              DynamicFieldsMixin,
+                              serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         read_only=True,
         view_name='projectschema-detail',
@@ -270,7 +304,9 @@ class ProjectSchemaSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
         fields = '__all__'
 
 
-class EntitySerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+class EntitySerializer(GroupsWithPermissionsMixin,
+                       DynamicFieldsMixin,
+                       serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(
         view_name='entity-detail',
         read_only=True

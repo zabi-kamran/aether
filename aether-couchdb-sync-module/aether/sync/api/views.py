@@ -35,6 +35,11 @@ from rest_framework.decorators import (
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle
 
+from aether.common.auth.permissions import (
+    CustomObjectPermissions,
+    CreateWithPermissionsMixin,
+)
+
 from .couchdb_helpers import create_db, create_or_update_user
 from .models import Project, Schema, MobileUser, DeviceDB
 from .serializers import ProjectSerializer, SchemaSerializer, MobileUserSerializer
@@ -51,7 +56,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(LOGGING_LEVEL)
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''
     Create new Project entries.
     '''
@@ -61,6 +66,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
                       .order_by('name')
     serializer_class = ProjectSerializer
     search_fields = ('name',)
+    permission_classes = (CustomObjectPermissions,)
+
+    def create(self, request, *args, **kwargs):
+        return create_with_permissions(self, request, *args, **kwargs)
 
     @action(detail=True, methods=['patch'])
     def propagate(self, request, pk=None, *args, **kwargs):
@@ -83,7 +92,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, pk, *args, **kwargs)
 
 
-class SchemaViewSet(viewsets.ModelViewSet):
+class SchemaViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''
     Create new Schema entries providing the AVRO schema via file or raw data.
     '''
@@ -91,6 +100,10 @@ class SchemaViewSet(viewsets.ModelViewSet):
     queryset = Schema.objects.order_by('name')
     serializer_class = SchemaSerializer
     search_fields = ('name', 'avro_schema',)
+    permission_classes = (CustomObjectPermissions,)
+
+    def create(self, request, *args, **kwargs):
+        return create_with_permissions(self, request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -122,7 +135,7 @@ class SchemaViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, pk, *args, **kwargs)
 
 
-class MobileUserViewSet(viewsets.ModelViewSet):
+class MobileUserViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''
     Create new Mobile User entries.
     '''
@@ -130,6 +143,10 @@ class MobileUserViewSet(viewsets.ModelViewSet):
     queryset = MobileUser.objects.order_by('email')
     serializer_class = MobileUserSerializer
     search_fields = ('email',)
+    permission_classes = (CustomObjectPermissions,)
+
+    def create(self, request, *args, **kwargs):
+        return create_with_permissions(self, request, *args, **kwargs)
 
 
 # Sync credentials endpoint

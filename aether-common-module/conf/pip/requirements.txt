@@ -7,9 +7,11 @@
 
 django<2
 django-cors-headers
+django-guardian==1.4.9
 django-prometheus
 django-storages
 djangorestframework
+djangorestframework-guardian==0.1.1
 psycopg2-binary
 requests
 boto3

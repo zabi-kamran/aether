@@ -26,6 +26,11 @@ class Config(AppConfig):
     verbose_name = 'Aether CouchDB-Sync'
 
     def ready(self):
+        # Register auth callback.
+        # TODO: coverage for this?
+        from django_cas_ng.signals import cas_user_authenticated  # pragma: nocover
+        from aether.common.auth.callbacks import auth_callback
+        cas_user_authenticated.connect(auth_callback)  # pragma: nocover
         # schedule jobs
         scheduler = get_scheduler('default')
 

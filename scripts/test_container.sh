@@ -33,13 +33,13 @@ DC_TEST="docker-compose -f docker-compose-test.yml"
 ./scripts/kill_all.sh
 $DC_TEST down
 
-if [[ $1 == "ui" ]]
-then
-    $DC_TEST build ui-assets-test
-    $DC_TEST run   ui-assets-test test
-    $DC_TEST run   ui-assets-test build
-    echo "_____________________________________________ Tested and built ui assets"
-fi
+# if [[ $1 == "ui" ]]
+# then
+#     $DC_TEST build ui-assets-test
+#     $DC_TEST run   ui-assets-test test
+#     $DC_TEST run   ui-assets-test build
+#     echo "_____________________________________________ Tested and built ui assets"
+# fi
 
 
 echo "_____________________________________________ Starting databases"
@@ -67,13 +67,15 @@ fi
 
 
 echo "_____________________________________________ Preparing $1 container"
-$DC_TEST build "$1"-test
+# $DC_TEST build "$1"-test
 echo "_____________________________________________ $1 ready!"
 if [[ $1 != "kernel" ]]
 then
     wait_for_kernel
 fi
-$DC_TEST run "$1"-test test
+# $DC_TEST run "$1"-test test aether.ui.api.tests.test_views.ViewsTest.test__pipeline__and__contract__viewsets
+# $DC_TEST run "$1"-test test  aether.ui.api.tests.test_views.ViewsTest.test__pipeline__fetch
+$DC_TEST run "$1"-test test aether.ui.api.tests.test_models.ModelsTests.test_permissions
 echo "_____________________________________________ $1 tests passed!"
 
 

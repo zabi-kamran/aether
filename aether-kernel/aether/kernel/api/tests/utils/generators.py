@@ -19,7 +19,10 @@
 import random
 
 from autofixture import AutoFixture
+from django.contrib.auth.models import Group, Permission
+from guardian.shortcuts import assign_perm, get_perms_for_model
 
+from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
 from aether.kernel.api.avro_tools import random_avro
 from aether.kernel.api.entity_extractor import run_entity_extraction
@@ -78,12 +81,14 @@ def get_field_values(default, values=None):
 
 
 def generate_project(
-        project_field_values=None,
-        schema_field_values=None,
-        projectschema_field_values=None,
-        mappingset_field_values=None,
-        mapping_field_values=None,
-        submission_field_values=None,
+    project_field_values=None,
+    schema_field_values=None,
+    projectschema_field_values=None,
+    mappingset_field_values=None,
+    mapping_field_values=None,
+    submission_field_values=None,
+    entity_field_values=None,
+    group_names=None,
 ):
     '''
     Generate an Aether Project.
@@ -111,6 +116,7 @@ def generate_project(
             values=project_field_values,
         ),
     ).create_one()
+    assign_permissions(group_names, project)
 
     schema = AutoFixture(
         model=models.Schema,
@@ -121,6 +127,7 @@ def generate_project(
             values=schema_field_values,
         ),
     ).create_one()
+    assign_permissions(group_names, schema)
 
     projectschema = AutoFixture(
         model=models.ProjectSchema,
@@ -132,6 +139,7 @@ def generate_project(
             values=projectschema_field_values,
         ),
     ).create_one()
+    assign_permissions(group_names, projectschema)
 
     for _ in range(random.randint(*MAPPINGS_COUNT_RANGE)):
         mappingset = AutoFixture(
@@ -144,13 +152,14 @@ def generate_project(
                 values=mappingset_field_values,
             ),
         ).create_one()
+        assign_permissions(group_names, mappingset)
 
         # create a random input based on the schema
         if not mappingset.input and mappingset.schema:
             mappingset.input = random_avro(mappingset.schema)
             mappingset.save()
 
-        AutoFixture(
+        mapping = AutoFixture(
             model=models.Mapping,
             field_values=get_field_values(
                 default=dict(
@@ -161,6 +170,7 @@ def generate_project(
                 values=mapping_field_values,
             ),
         ).create_one()
+        assign_permissions(group_names, mapping)
 
         for _ in range(random.randint(*SUBMISSIONS_COUNT_RANGE)):
             submission = AutoFixture(
@@ -175,6 +185,9 @@ def generate_project(
                     values=submission_field_values,
                 ),
             ).create_one()
+            assign_permissions(group_names, submission)
 
             # extract entities
             run_entity_extraction(submission)
+            for entity in submission.entities.all():
+                assign_permissions(group_names, entity)

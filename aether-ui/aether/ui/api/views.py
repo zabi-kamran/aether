@@ -24,17 +24,28 @@ from http import HTTPStatus
 from rest_framework import viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
+from rest_framework import viewsets, permissions, status, versioning
+
+from guardian.shortcuts import assign_perm, get_objects_for_user, get_perms_for_model
 
 from aether.common.kernel.utils import get_kernel_server_url
+from aether.common.auth.permissions import (
+    CreateWithPermissionsMixin,
+    CustomObjectPermissions,
+)
 
 from . import models, serializers, utils
 
 
-class PipelineViewSet(viewsets.ModelViewSet):
+class PipelineViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.Pipeline.objects.all()
     serializer_class = serializers.PipelineSerializer
     ordering = ('name',)
     pagination_class = None
+    permission_classes = (CustomObjectPermissions,)
+
+    def create(self, request, *args, **kwargs):
+        return create_with_permissions(self, request, *args, **kwargs)
 
     @action(methods=['post'], detail=False)
     def fetch(self, request):
@@ -81,11 +92,14 @@ class PipelineViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, pk)
 
 
-class ContractViewSet(viewsets.ModelViewSet):
+class ContractViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.Contract.objects.all()
     serializer_class = serializers.ContractSerializer
     ordering = ('name',)
+    permission_classes = (CustomObjectPermissions,)
 
+    def create(self, request, *args, **kwargs):
+        return create_with_permissions(self, request, *args, **kwargs)
 
 @api_view(['GET'])
 def get_kernel_url(request):

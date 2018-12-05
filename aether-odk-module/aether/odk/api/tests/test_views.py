@@ -17,7 +17,11 @@
 # under the License.
 
 from django.urls import reverse
+from guardian.shortcuts import assign_perm
 from rest_framework import status
+
+from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
 
 from . import CustomTestCase
 
@@ -27,6 +31,7 @@ class ViewsTests(CustomTestCase):
     def setUp(self):
         super(ViewsTests, self).setUp()
         self.helper_create_user()
+        auth_callback(None, self.user, {'roles': 'a'})
         self.xform = self.helper_create_xform(with_media=True, with_version=False)
         self.formIdXml = '<formID>%s</formID>' % self.xform.form_id
         self.url_get_form = self.xform.download_url
@@ -176,10 +181,11 @@ class ViewsTests(CustomTestCase):
     def test__xform__filters(self):
         self.xform.delete()  # remove default xform
         project_ids = {i: self.helper_create_uuid() for i in range(4)}
-        self.helper_create_xform(project_id=project_ids[0])
-        self.helper_create_xform(project_id=project_ids[0])
-        self.helper_create_xform(project_id=project_ids[1])
-        self.helper_create_xform(project_id=project_ids[2])
+        group_names = ['a']
+        self.helper_create_xform(project_id=project_ids[0], group_names=group_names)
+        self.helper_create_xform(project_id=project_ids[0], group_names=group_names)
+        self.helper_create_xform(project_id=project_ids[1], group_names=group_names)
+        self.helper_create_xform(project_id=project_ids[2], group_names=group_names)
 
         response = self.client.get('/xforms.json', **self.headers_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -206,10 +212,12 @@ class ViewsTests(CustomTestCase):
         self.assertEqual(response.json()['count'], 0)
 
     def test__surveyors__search(self):
-        self.helper_create_surveyor(username='peter-pan')
-        self.helper_create_surveyor(username='peter-smith')
-        self.helper_create_surveyor(username='peter-doe')
-        self.helper_create_surveyor(username='paul-pan')
+        a = self.helper_create_surveyor(username='peter-pan')
+        b = self.helper_create_surveyor(username='peter-smith')
+        c = self.helper_create_surveyor(username='peter-doe')
+        d = self.helper_create_surveyor(username='paul-pan')
+        for user in [a, b, c, d]:
+            assign_permissions(['a'], user)
 
         response = self.client.get('/surveyors.json', **self.headers_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -234,6 +242,7 @@ class ViewsTests(CustomTestCase):
     def test__surveyors__by_project(self):
         project_ids = {i: self.helper_create_uuid() for i in range(4)}
         # create surveyors
+        auth_callback(None, self.user, {'roles': 'a'})
         a = self.helper_create_surveyor(username='a')
         b = self.helper_create_surveyor(username='b')
         c = self.helper_create_surveyor(username='c')
@@ -241,6 +250,8 @@ class ViewsTests(CustomTestCase):
 
         # create xforms with or without surveyors
         self.xform.delete()  # remove default xform
+        for user in [a, b, c, d]:
+            assign_permissions(['a'], user)
 
         response = self.client.get('/surveyors.json', **self.headers_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

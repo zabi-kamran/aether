@@ -84,7 +84,9 @@ services:
     tty: true
     environment:
       # Uncomment this line to enable single sign on if you use CAS
-      # CAS_SERVER_URL: https://your.cas.server
+      # CAS_SERVER_URL: http://ums-dev.ehealthafrica.org/
+      CAS_SERVER_URL: http://192.168.178.89:8080/
+      # CAS_SERVER_URL: http://192.168.0.7:8080/
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"
@@ -137,6 +139,9 @@ services:
     environment:
       # Uncomment this line to enable single sign on if you use CAS
       # CAS_SERVER_URL: https://your.cas.server
+      CAS_SERVER_URL: http://192.168.178.89:8080/
+      # CAS_SERVER_URL: http://192.168.178.89:8080/
+      # CAS_SERVER_URL: http://192.168.0.7:8080/
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"
@@ -192,6 +197,8 @@ services:
     environment: &sync-environment
       # Uncomment this line to enable single sign on if you use CAS
       # CAS_SERVER_URL: https://your.cas.server
+      CAS_SERVER_URL: http://192.168.178.89:8080/
+      # CAS_SERVER_URL: http://192.168.0.7:8080/
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"
@@ -256,6 +263,8 @@ services:
     environment:
       # Uncomment this line to enable single sign on if you use CAS
       # CAS_SERVER_URL: https://your.cas.server
+      CAS_SERVER_URL: http://192.168.178.89:8080/
+      # CAS_SERVER_URL: http://192.168.0.7:8080/
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"

@@ -32,9 +32,16 @@ ROOT_URLCONF = 'aether.odk.urls'
 CORS_URLS_REGEX = r'^/submission/.*$'
 
 INSTALLED_APPS += [
+    'django_pdb',
     'aether.odk',
+]
+
+MIDDLEWARE += [
+    'django_pdb.middleware.PdbMiddleware',
 ]
 
 MIGRATION_MODULES = {
     'odk': 'aether.odk.api.migrations',
 }
+
+POST_MORTEM = True

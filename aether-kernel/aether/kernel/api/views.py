@@ -16,13 +16,16 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Min, Max, TextField, Q, Case, When
 from django.db.models.functions import Cast
+from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from rest_framework import viewsets, permissions, status, versioning
+from guardian.shortcuts import get_objects_for_user
+from rest_framework import viewsets, permissions, status, versioning, generics
 from rest_framework.response import Response
 from rest_framework.decorators import (
     action,
@@ -32,11 +35,20 @@ from rest_framework.decorators import (
 )
 from rest_framework.renderers import JSONRenderer
 
+from guardian.shortcuts import get_objects_for_user
+
 from .avro_tools import extract_jsonpaths_and_docs
 from .constants import LINKED_DATA_MAX_DEPTH
 from .entity_extractor import extract_create_entities
 from .exporter import ExporterViewSet
 from .mapping_validation import validate_mappings
+
+from rest_framework import permissions
+
+from aether.common.auth.permissions import (
+    CreateWithPermissionsMixin,
+    CustomObjectPermissions,
+)
 
 from . import (
     filters,
@@ -46,10 +58,17 @@ from . import (
 )
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+# TODO: re-add this
+# from rest_framework_guardian import filters as filters_
+from guardian.shortcuts import assign_perm, get_objects_for_user, get_perms_for_model
+
+
+class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.Project.objects.all()
     serializer_class = serializers.ProjectSerializer
     filter_class = filters.ProjectFilter
+    permission_classes = (CustomObjectPermissions,)
+    # filter_backends = (filters_.DjangoObjectPermissionsFilter,)
 
     @action(detail=True, methods=['get'], url_name='skeleton', url_path='schemas-skeleton')
     def schemas_skeleton(self, request, pk=None, *args, **kwargs):
@@ -64,7 +83,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
             ``/projects/{pk}/schemas-skeleton/?family={pk}``
 
         '''
-
         project = get_object_or_404(models.Project, pk=pk)
 
         # extract jsonpaths and docs from linked schemas definition
@@ -99,7 +117,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             'schemas': len(schemas),
         })
 
-    @action(detail=True, methods=['get', 'patch'])
+    @action(
+        detail=True,
+        methods=['get', 'patch'],
+        permission_classes=[
+            permissions.IsAdminUser,
+            permissions.IsAuthenticated,
+        ])
     def artefacts(self, request, pk=None, *args, **kwargs):
         '''
         PATCH: Creates or updates the project and its artefacts:
@@ -109,13 +133,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         Reachable at ``/projects/{pk}/artefacts/``
         '''
-
         if request.method == 'GET':
             return self.__retrieve_artefacts(request, pk)
         else:
             return self.__upsert_artefacts(request, pk)
 
-    @action(detail=True, methods=['patch'], url_path='avro-schemas')
+    @action(
+        detail=True,
+        methods=['patch'],
+        permission_classes=[
+            permissions.IsAdminUser,
+            permissions.IsAuthenticated,
+        ],
+        url_path='avro-schemas')
     def avro_schemas(self, request, pk=None, *args, **kwargs):
         '''
         Creates or updates the project and links it with the given AVRO schemas
@@ -125,7 +155,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
         Reachable at ``.../projects/{pk}/avro-schemas/``
         '''
-
         return self.__upsert_schemas(request, pk)
 
     def __retrieve_artefacts(self, request, pk=None):
@@ -133,9 +162,19 @@ class ProjectViewSet(viewsets.ModelViewSet):
         Returns the list of project and all its artefact ids by type.
         '''
 
-        project = get_object_or_404(models.Project, pk=pk)
+        # the group which the user belongs to needs to have
+        # permission to modify the project
+        groups = request.query_params.get('groups')
+        try:
+            project = get_objects_for_user(
+                user=request.user,
+                perms='view_project',
+                klass=models.Project,
+                accept_global_perms=False,
+            ).get(pk=pk)
+        except ObjectDoesNotExist:
+            raise Http404('No project matches the given query.')
         results = project_artefacts.get_project_artefacts(project)
-
         return Response(data=results)
 
     def __upsert_artefacts(self, request, pk=None):
@@ -217,12 +256,18 @@ class ProjectViewSet(viewsets.ModelViewSet):
                         }
                     },
                     # ...
+                ],
+                # optional
+                "group_names": [
+                  "organisationX",
+                  "organisationY"
                 ]
             }
 
         '''
 
         data = request.data
+        group_names = data.get('group_names')
         results = project_artefacts.upsert_project_artefacts(
             action=data.get('action', 'upsert'),
             project_id=pk,
@@ -230,6 +275,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             schemas=data.get('schemas', []),
             mappingsets=data.get('mappingsets', []),
             mappings=data.get('mappings', []),
+            group_names=data.get('group_names', []),
         )
 
         return Response(data=results)
@@ -285,39 +331,44 @@ class ProjectViewSet(viewsets.ModelViewSet):
             project_name=data.get('name'),
             avro_schemas=data.get('avro_schemas', []),
             family=data.get('family') or pk,
+            group_names=data.get('group_names', []),
         )
-
         return Response(data=results)
 
 
-class MappingSetViewSet(viewsets.ModelViewSet):
+class MappingSetViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.MappingSet.objects.all()
     serializer_class = serializers.MappingSetSerializer
     filter_class = filters.MappingSetFilter
+    permission_classes = (CustomObjectPermissions,)
 
 
-class MappingViewSet(viewsets.ModelViewSet):
+class MappingViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.Mapping.objects.all()
     serializer_class = serializers.MappingSerializer
     filter_class = filters.MappingFilter
+    permission_classes = (CustomObjectPermissions,)
 
 
-class SubmissionViewSet(ExporterViewSet):
+class SubmissionViewSet(CreateWithPermissionsMixin, ExporterViewSet):
     queryset = models.Submission.objects.all()
     serializer_class = serializers.SubmissionSerializer
     filter_class = filters.SubmissionFilter
+    permission_classes = (CustomObjectPermissions,)
 
 
-class AttachmentViewSet(viewsets.ModelViewSet):
+class AttachmentViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.Attachment.objects.all()
     serializer_class = serializers.AttachmentSerializer
     filter_class = filters.AttachmentFilter
+    permission_classes = (CustomObjectPermissions,)
 
 
-class SchemaViewSet(viewsets.ModelViewSet):
+class SchemaViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.Schema.objects.all()
     serializer_class = serializers.SchemaSerializer
     filter_class = filters.SchemaFilter
+    permission_classes = (CustomObjectPermissions,)
 
     @action(detail=True, methods=['get'])
     def skeleton(self, request, pk=None, *args, **kwargs):
@@ -345,10 +396,11 @@ class SchemaViewSet(viewsets.ModelViewSet):
         })
 
 
-class ProjectSchemaViewSet(viewsets.ModelViewSet):
+class ProjectSchemaViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     queryset = models.ProjectSchema.objects.all()
     serializer_class = serializers.ProjectSchemaSerializer
     filter_class = filters.ProjectSchemaFilter
+    permission_classes = (CustomObjectPermissions,)
 
     @action(detail=True, methods=['get'])
     def skeleton(self, request, pk=None, *args, **kwargs):
@@ -377,10 +429,12 @@ class ProjectSchemaViewSet(viewsets.ModelViewSet):
         })
 
 
-class EntityViewSet(ExporterViewSet):
+class EntityViewSet(CreateWithPermissionsMixin, ExporterViewSet):
     queryset = models.Entity.objects.all()
     serializer_class = serializers.EntitySerializer
     filter_class = filters.EntityFilter
+    permission_classes = (CustomObjectPermissions,)
+    # filter_backends = (filters_.DjangoObjectPermissionsFilter,)
 
     # Exporter required fields
     schema_field = 'projectschema__schema__definition'
@@ -478,7 +532,7 @@ class SubmissionStatsMixin(object):
             #     filter=entities_filter,
             # )
 
-        return self.model.objects \
+        result = get_objects_for_user(self.request.user, perms=[], klass=self.model) \
                    .values('id', 'name', 'created') \
                    .annotate(
                        first_submission=Min('submissions__created'),
@@ -487,6 +541,7 @@ class SubmissionStatsMixin(object):
                        attachments_count=Count('submissions__attachments__id', distinct=True),
                        entities_count=entities_count,
                    )
+        return result
 
 
 class ProjectStatsViewSet(SubmissionStatsMixin, viewsets.ReadOnlyModelViewSet):

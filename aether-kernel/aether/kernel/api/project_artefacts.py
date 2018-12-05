@@ -26,6 +26,7 @@ from .constants import NAMESPACE
 from .models import Project, Schema, ProjectSchema, MappingSet, Mapping
 from .avro_tools import avro_schema_to_passthrough_artefacts as parser
 
+from aether.common.auth.permissions import assign_permissions
 
 NAME_MAX_SIZE = 50
 
@@ -34,7 +35,6 @@ def get_project_artefacts(project):
     '''
     Returns the list of project and all its artefact ids by type.
     '''
-
     results = {
         'project': str(project.pk),
         'schemas': set(),
@@ -56,12 +56,13 @@ def get_project_artefacts(project):
 
 @transaction.atomic
 def upsert_project_artefacts(
-    action='upsert',
-    project_id=None,
-    project_name=None,
-    schemas=[],
-    mappingsets=[],
-    mappings=[],
+        action='upsert',
+        project_id=None,
+        project_name=None,
+        schemas=[],
+        mappingsets=[],
+        mappings=[],
+        group_names=None,
 ):
     '''
     Creates or updates the project and its artefacts:
@@ -91,6 +92,7 @@ def upsert_project_artefacts(
         ignore_fields=['name'],  # do not update the name if the project already exists
         action=action,
         name=project_name or __random_name(),
+        group_names=group_names,
     )
     results['project'] = str(project.pk)
 
@@ -113,6 +115,7 @@ def upsert_project_artefacts(
             definition=raw_schema.get('definition', {}),
             type=raw_schema.get('type', NAMESPACE),
             family=raw_schema.get('family'),
+            group_names=group_names,
         )
         results['schemas'].add(str(schema.pk))
 
@@ -127,6 +130,7 @@ def upsert_project_artefacts(
                 project=project,
                 schema=schema,
                 name=schema.name,
+                group_names=group_names,
             )
         results['project_schemas'].add(str(project_schema.pk))
         # by default use the given name, otherwise the generated one
@@ -155,6 +159,7 @@ def upsert_project_artefacts(
             input=raw_mappingset.get('input', {}),
             schema=raw_mappingset.get('schema', {}),
             project=project,
+            group_names=group_names,
         )
         results['mappingsets'].add(str(mappingset.pk))
 
@@ -198,6 +203,7 @@ def upsert_project_artefacts(
                 input=raw_mapping.get('input', {}),
                 schema=raw_mapping.get('schema', {}),
                 project=project,
+                group_names=group_names,
             )
         results['mappingsets'].add(str(mappingset.pk))
 
@@ -212,6 +218,7 @@ def upsert_project_artefacts(
             is_read_only=raw_mapping.get('is_read_only', False),
             is_active=raw_mapping.get('is_active', True),
             project=project,
+            group_names=group_names,
         )
         results['mappings'].add(str(mapping.pk))
 
@@ -224,6 +231,7 @@ def upsert_project_with_avro_schemas(
     project_name=None,
     avro_schemas=[],
     family=None,
+    group_names=None,
 ):
     '''
     Creates or updates the project and links it with the given AVRO schemas
@@ -259,10 +267,18 @@ def upsert_project_with_avro_schemas(
         project_name=project_name,
         schemas=schemas,
         mappings=mappings,
+        group_names=group_names,
     )
 
 
-def __upsert_instance(model, pk=None, ignore_fields=[], action='upsert', **values):
+def __upsert_instance(
+        model,
+        pk=None,
+        ignore_fields=[],
+        action='upsert',
+        group_names=None,
+        **values,
+):
     '''
     Creates or updates an instance of the indicated Model.
 
@@ -312,6 +328,9 @@ def __upsert_instance(model, pk=None, ignore_fields=[], action='upsert', **value
 
     if is_new or action != 'create':
         item.save()
+
+    if group_names:
+        assign_permissions(group_names, item)
 
     item.refresh_from_db()
     return item

@@ -21,6 +21,8 @@
 from django.contrib import admin, messages
 from django.utils.translation import ugettext as _
 
+from guardian.admin import GuardedModelAdmin
+
 from .api.models import Project, XForm, MediaFile
 from .api.forms import ProjectForm, XFormForm
 from .api.kernel_utils import (
@@ -30,7 +32,7 @@ from .api.kernel_utils import (
 )
 
 
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     def propagate(self, request, queryset):  # pragma: no cover
         try:
@@ -70,7 +72,7 @@ class ProjectAdmin(admin.ModelAdmin):
     )
 
 
-class XFormAdmin(admin.ModelAdmin):
+class XFormAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     def propagate(self, request, queryset):  # pragma: no cover
         try:
@@ -123,7 +125,7 @@ class XFormAdmin(admin.ModelAdmin):
     )
 
 
-class MediaFileAdmin(admin.ModelAdmin):
+class MediaFileAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     list_display = (
         'xform',

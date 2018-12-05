@@ -19,6 +19,9 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
+
 from ..models import Project, Schema
 
 
@@ -32,6 +35,7 @@ class FilterViewsTests(TestCase):
         password = 'testtest'
         self.user = get_user_model().objects.create_user(username, email, password)
         self.assertTrue(self.client.login(username=username, password=password))
+        auth_callback(None, self.user, {'roles': 'a'})
 
     def tearDown(self):
         super(FilterViewsTests, self).tearDown()
@@ -44,10 +48,9 @@ class FilterViewsTests(TestCase):
                 Project.objects.create(name=f'sample-{i}')
             )
 
-        Schema.objects.create(project=projects[0], name='1', avro_schema={})
-        Schema.objects.create(project=projects[0], name='2', avro_schema={})
-        Schema.objects.create(project=projects[1], name='3', avro_schema={})
-        Schema.objects.create(project=projects[2], name='4', avro_schema={})
+        for project_index, project_name in zip([0, 0, 1, 2], ['1', '2', '3', '4']):
+            schema = Schema.objects.create(project=projects[project_index], name=project_name, avro_schema={})
+            assign_permissions(group_names=['a'], instance=schema)
 
         response = self.client.get('/schemas.json')
         self.assertEqual(response.status_code, 200)

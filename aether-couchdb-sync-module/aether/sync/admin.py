@@ -19,6 +19,8 @@
 from django.contrib import admin, messages
 from django.utils.translation import ugettext as _
 
+from guardian.admin import GuardedModelAdmin
+
 from .api.forms import SchemaForm
 from .api.models import MobileUser, DeviceDB, Project, Schema
 from .api.kernel_utils import (
@@ -28,7 +30,7 @@ from .api.kernel_utils import (
 )
 
 
-class MobileUserAdmin(admin.ModelAdmin):
+class MobileUserAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     list_display = (
         'id',
@@ -38,7 +40,7 @@ class MobileUserAdmin(admin.ModelAdmin):
     ordering = list_display
 
 
-class DeviceDBAdmin(admin.ModelAdmin):
+class DeviceDBAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     list_display = (
         'id',
@@ -53,7 +55,7 @@ class DeviceDBAdmin(admin.ModelAdmin):
     ordering = list_display
 
 
-class ProjectAdmin(admin.ModelAdmin):
+class ProjectAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     def propagate(self, request, queryset):  # pragma: no cover
         try:
@@ -85,7 +87,7 @@ class ProjectAdmin(admin.ModelAdmin):
     )
 
 
-class SchemaAdmin(admin.ModelAdmin):
+class SchemaAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     def propagate(self, request, queryset):  # pragma: no cover
         try:

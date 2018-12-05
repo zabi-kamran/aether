@@ -28,8 +28,10 @@ aether.common
 
 
 # Django specific
+django-guardian
 django-model-utils
 django-webpack-loader  # load JS assets
+djangorestframework-guardian
 drf-dynamic-fields
 
 

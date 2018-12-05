@@ -20,6 +20,8 @@ import requests
 
 from django.utils.translation import ugettext as _
 
+from guardian.shortcuts import get_groups_with_perms
+
 from aether.common.kernel.utils import get_auth_header, get_kernel_server_url
 
 from ..errors import KernelPropagationError
@@ -48,10 +50,12 @@ def propagate_kernel_project(project, family=None):
         - one ProjectSchema.
     '''
 
+    group_names = [group.name for group in get_groups_with_perms(project)]
     artefacts = {
         'name': project.name,
         'family': family,
         'avro_schemas': [],
+        'group_names': group_names,
     }
 
     for schema in project.schemas.order_by('name'):
@@ -68,10 +72,12 @@ def propagate_kernel_artefacts(schema, family=None):
     Creates/updates artefacts based on the indicated Schema in Aether Kernel.
     '''
 
+    group_names = [group.name for group in get_groups_with_perms(project)]
     artefacts = {
         'name': schema.project.name,
         'family': family,
         'avro_schemas': [__parse_schema(schema)],
+        'group_names': group_names,
     }
 
     __upsert_kernel_artefacts(schema.project, artefacts)

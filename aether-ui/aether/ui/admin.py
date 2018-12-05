@@ -18,17 +18,19 @@
 
 from django.contrib import admin
 
+from guardian.admin import GuardedModelAdmin
+
 from .api import models
 
 
-class PipelineAdmin(admin.ModelAdmin):
+class PipelineAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     list_display = ('name',)
     search_fields = ('name',)
     ordering = list_display
 
 
-class ContractAdmin(admin.ModelAdmin):
+class ContractAdmin(GuardedModelAdmin, admin.ModelAdmin):
 
     list_display = ('name', 'published_on',)
     search_fields = ('name',)

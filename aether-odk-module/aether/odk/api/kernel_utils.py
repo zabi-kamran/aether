@@ -21,6 +21,8 @@ import requests
 
 from django.utils.translation import ugettext as _
 
+from guardian.shortcuts import get_groups_with_perms
+
 from aether.common.kernel.utils import get_auth_header, get_kernel_server_url
 
 # list of messages that can be translated
@@ -52,10 +54,12 @@ def propagate_kernel_project(project, family=None):
         - one ProjectSchema.
     '''
 
+    group_names = [group.name for group in get_groups_with_perms(project)]
     artefacts = {
         'name': project.name,
         'family': family,
         'avro_schemas': [],
+        'group_names': group_names,
     }
 
     for xform in project.xforms.order_by('-modified_at'):
@@ -72,10 +76,12 @@ def propagate_kernel_artefacts(xform, family=None):
     Creates/updates artefacts based on the indicated xForm in Aether Kernel.
     '''
 
+    group_names = [group.name for group in get_groups_with_perms(xform)]
     artefacts = {
         'name': xform.project.name,
         'family': family,
         'avro_schemas': [__parse_xform(xform)],
+        'group_names': group_names,
     }
 
     __upsert_kernel_artefacts(xform.project, artefacts)

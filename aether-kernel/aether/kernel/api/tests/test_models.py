@@ -19,16 +19,32 @@
 import uuid
 
 from django.db.utils import IntegrityError
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from django.test import TransactionTestCase
 
+from guardian.shortcuts import assign_perm, get_perms_for_model  # pragma: nocover
+
+from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
 
 from . import EXAMPLE_SCHEMA, EXAMPLE_SOURCE_DATA, EXAMPLE_SOURCE_DATA_ENTITY, EXAMPLE_MAPPING
 
 
 class ModelsTests(TransactionTestCase):
+
+    def assert_has_permissions(self, user, instance):
+        for permission in get_perms_for_model(instance):
+            has_permission = user.has_perm(permission.codename, instance)
+            self.assertTrue(has_permission, permission.codename)
+
+    def assert_has_no_permissions(self, user, instance):
+        for permission in get_perms_for_model(instance):
+            has_permission = user.has_perm(permission.codename, instance)
+            self.assertFalse(has_permission, permission.codename)
 
     def test_models(self):
 
@@ -347,3 +363,73 @@ class ModelsTests(TransactionTestCase):
         self.assertTrue(models.Schema.objects.filter(pk=schema.pk).exists())
         schema.refresh_from_db()
         self.assertIsNone(schema.family)
+
+    def test_permissions(self):
+        '''
+        Assert that all models which have a foreign key relationship to a
+        Project will inherit that project's permissions.
+
+        Permissions for all models except Schema and Project itself can
+        be calculated at the model level. We rely on view-level permission
+        assignment for Schema and Project.
+        '''
+        user = get_user_model().objects.create(
+            username='test',
+            password='testtest',
+        )
+        roles = 'a-group'
+        auth_callback(None, user, {'roles': roles})
+        project = models.Project.objects.create(name='a-project')
+        self.assert_has_no_permissions(user, project)
+        assign_permissions([roles], project)
+        self.assert_has_permissions(user, project)
+        mappingset = models.MappingSet.objects.create(
+            revision='a sample revision',
+            name='a sample mapping set',
+            schema=EXAMPLE_SCHEMA,
+            input=EXAMPLE_SOURCE_DATA,
+            project=project,
+        )
+        self.assert_has_permissions(user, mappingset)
+        schema = models.Schema.objects.create(
+            name='sample schema',
+            definition=EXAMPLE_SCHEMA,
+            revision='a sample revision',
+            type='any-type',
+        )
+        # Schema is special -- it is shared between projects, so we
+        # have to rely on view-level permission assignment.
+        self.assert_has_no_permissions(user, schema)
+        projectschema = models.ProjectSchema.objects.create(
+            name='sample project schema',
+            project=project,
+            schema=schema,
+        )
+        self.assert_has_permissions(user, projectschema)
+        mapping = models.Mapping.objects.create(
+            name='sample mapping',
+            definition={'entities': {}, 'mapping': []},
+            revision='a sample revision field',
+            mappingset=mappingset,
+        )
+        self.assert_has_permissions(user, mapping)
+        submission = models.Submission.objects.create(
+            revision='a sample revision',
+            payload=EXAMPLE_SOURCE_DATA,
+            mappingset=mappingset,
+        )
+        self.assert_has_permissions(user, submission)
+        attachment = models.Attachment.objects.create(
+            submission=submission,
+            attachment_file=SimpleUploadedFile('sample.txt', b'abc'),
+        )
+        self.assert_has_permissions(user, attachment)
+        entity = models.Entity.objects.create(
+            revision='a sample revision',
+            payload=EXAMPLE_SOURCE_DATA_ENTITY,
+            status='Publishable',
+            projectschema=projectschema,
+            mapping=mapping,
+            submission=submission,
+        )
+        self.assert_has_permissions(user, entity)

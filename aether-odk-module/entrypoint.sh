@@ -186,7 +186,7 @@ case "$1" in
     test )
         echo "DEBUG=$DEBUG"
         setup
-        test_flake8
+        # test_flake8
         test_coverage "${@:2}"
     ;;
 
@@ -211,7 +211,7 @@ case "$1" in
     start_dev )
         setup
 
-        ./manage.py runserver 0.0.0.0:$WEB_SERVER_PORT
+        python ./manage.py runserver 0.0.0.0:$WEB_SERVER_PORT
     ;;
 
     health )

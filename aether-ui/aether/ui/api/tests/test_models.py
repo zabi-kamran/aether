@@ -19,8 +19,13 @@
 import json
 import mock
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
+from guardian.shortcuts import get_perms_for_model
+
+from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
 from aether.common.kernel import utils as kernel_utils
 
 from ..models import Pipeline, Contract
@@ -74,6 +79,16 @@ class MockResponse:
 
 
 class ModelsTests(TestCase):
+
+    def assert_has_permissions(self, user, instance):
+        for permission in get_perms_for_model(instance):
+            has_permission = user.has_perm(permission.codename, instance)
+            self.assertTrue(has_permission, permission.codename)
+
+    def assert_has_no_permissions(self, user, instance):
+        for permission in get_perms_for_model(instance):
+            has_permission = user.has_perm(permission.codename, instance)
+            self.assertFalse(has_permission, permission.codename)
 
     def setUp(self):
         # check Kernel testing server
@@ -380,3 +395,29 @@ class ModelsTests(TestCase):
         self.assertNotEqual(contract.output, [])
         self.assertIsNotNone(contract.output[0]['id'], 'Generated id!')
         self.assertEqual(contract.output[0]['firstName'], 'Smith')
+
+    def test_permissions(self):
+        '''
+        Assert that all models which have a foreign key relationship to a
+        Pipeline will inherit that project's permissions.
+        '''
+        user = get_user_model().objects.create(
+            username='test',
+            password='testtest',
+        )
+        roles = 'a-group'
+        auth_callback(None, user, {'roles': roles})
+        name = 'a-project-name'
+        pipeline = Pipeline.objects.create(
+            name='Pipeline test',
+            input=INPUT_SAMPLE,
+        )
+        self.assert_has_no_permissions(user, pipeline)
+        assign_permissions([roles], pipeline)
+        self.assert_has_permissions(user, pipeline)
+        contract = Contract.objects.create(
+            entity_types=[ENTITY_SAMPLE],
+            mapping=[],
+            pipeline=pipeline
+        )
+        self.assert_has_permissions(user, contract)

@@ -81,6 +81,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'storages',
 
+    # Object-level permissions
+    'guardian',
+
     # REST framework with auth token
     'rest_framework',
     'rest_framework.authtoken',
@@ -150,6 +153,7 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': (
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
+        'rest_framework_guardian.filters.DjangoObjectPermissionsFilter',
     ),
     'DEFAULT_PAGINATION_CLASS': 'aether.common.drf.pagination.CustomPagination',
     'PAGE_SIZE': int(os.environ.get('PAGE_SIZE', 10)),
@@ -253,6 +257,7 @@ LOGGING = {
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
 ]
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -278,10 +283,10 @@ if CAS_SERVER_URL:
     INSTALLED_APPS += [
         # CAS libraries
         'django_cas_ng',
-        'ums_client',
+        # 'ums_client',
     ]
     AUTHENTICATION_BACKENDS += [
-        'ums_client.backends.UMSRoleBackend',
+        'django_cas_ng.backends.CASBackend',
     ]
     CAS_VERSION = 3
     CAS_LOGOUT_COMPLETELY = True

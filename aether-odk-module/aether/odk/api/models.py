@@ -21,6 +21,7 @@ import uuid
 from hashlib import md5
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
@@ -30,6 +31,7 @@ from django.utils.translation import ugettext as _
 from django_prometheus.models import ExportModelOperationsMixin
 
 from aether.common.utils import resolve_file_url
+from aether.common.auth.permissions import assign_permissions_via_project
 
 from .xform_utils import (
     get_xform_data_from_xml,
@@ -121,6 +123,9 @@ class Project(ExportModelOperationsMixin('odk_project'), models.Model):
         ordering = ['name']
         verbose_name = _('project')
         verbose_name_plural = _('projects')
+        permissions = (
+            ('view_project', 'Can view Project'),
+        )
 
 
 def __validate_xml_data__(value):
@@ -271,7 +276,9 @@ class XForm(ExportModelOperationsMixin('odk_xform'), models.Model):
 
         # update "modified_at"
         self.modified_at = timezone.now()
-        return super(XForm, self).save(*args, **kwargs)
+        super(XForm, self).save(*args, **kwargs)
+        assign_permissions_via_project(self.project, self)
+        return self
 
     def is_surveyor(self, user):
         '''
@@ -309,6 +316,9 @@ class XForm(ExportModelOperationsMixin('odk_xform'), models.Model):
         ordering = ['title', 'form_id', 'version']
         verbose_name = _('xform')
         verbose_name_plural = _('xforms')
+        permissions = (
+            ('view_xform', 'Can view XForm'),
+        )
 
 
 def __media_path__(instance, filename):
@@ -358,6 +368,7 @@ class MediaFile(ExportModelOperationsMixin('odk_mediafile'), models.Model):
             self.name = self.media_file.name
 
         super(MediaFile, self).save(*args, **kwargs)
+        assign_permissions_via_project(self.xform.project, self)
 
     def __str__(self):
         return self.name
@@ -368,3 +379,6 @@ class MediaFile(ExportModelOperationsMixin('odk_mediafile'), models.Model):
         ordering = ['xform', 'name']
         verbose_name = _('media file')
         verbose_name_plural = _('media files')
+        permissions = (
+            ('view_mediafile', 'Can view MediaFile'),
+        )

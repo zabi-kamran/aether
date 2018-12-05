@@ -29,6 +29,8 @@ aether.common
 
 # Django specific
 django-filter
+django-guardian
+djangorestframework-guardian
 django-model-utils
 django-reversion-compare
 drf-dynamic-fields

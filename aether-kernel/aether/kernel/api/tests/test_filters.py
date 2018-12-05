@@ -25,6 +25,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from aether.common.auth.callbacks import auth_callback
 from aether.kernel.api import models
 from aether.kernel.api.tests.utils.generators import generate_project
 
@@ -37,12 +38,14 @@ class TestFilters(TestCase):
         password = 'password'
         self.user = get_user_model().objects.create_user(username, email, password)
         self.assertTrue(self.client.login(username=username, password=password))
+        roles = 'a'
+        auth_callback(None, self.user, {'roles': roles})
 
     def test_project_filter__by_schema(self):
         url = reverse(viewname='project-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         projects_count = models.Project.objects.count()
         # Get a list of all schemas.
         for schema in models.Schema.objects.all():
@@ -75,7 +78,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='schema-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         schemas_count = models.Schema.objects.count()
         # Get a list of all projects.
         for project in models.Project.objects.all():
@@ -108,7 +111,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='schema-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         mappings_count = models.Mapping.objects.count()
         # Get a list of all mappings.
         for mapping in models.Mapping.objects.all():
@@ -137,7 +140,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='entity-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         entities_count = models.Entity.objects.count()
         # Get a list of all projects.
         for project in models.Project.objects.all():
@@ -170,7 +173,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='entity-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         entities_count = models.Entity.objects.count()
         # Get a list of all mappings.
         for mapping in models.Mapping.objects.all():
@@ -203,7 +206,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='entity-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         entities_count = models.Entity.objects.count()
         # Get a list of all schemas.
         for schema in models.Schema.objects.all():
@@ -236,7 +239,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='entity-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         entities_count = models.Entity.objects.count()
         # Get a list of all submissions.
         for submission in models.Submission.objects.all():
@@ -258,11 +261,14 @@ class TestFilters(TestCase):
         url = reverse(viewname='entity-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project(schema_field_values={
-                # The filter test fails if the generated string ends with a space.
-                # The serializer class removes any trailing whitespace sent to the field.
-                'family': generators.StringGenerator(min_length=10, max_length=30, chars=string.ascii_letters),
-            })
+            generate_project(
+                schema_field_values={
+                    # The filter test fails if the generated string ends with a space.
+                    # The serializer class removes any trailing whitespace sent to the field.
+                    'family': generators.StringGenerator(min_length=10, max_length=30, chars=string.ascii_letters),
+                },
+                group_names=['a'],
+            )
         entities_count = models.Entity.objects.count()
         # Get a list of all schema families.
         for family in models.Schema.objects.exclude(family=None).values_list('family', flat=True).distinct():
@@ -287,7 +293,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='entity-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         entities_count = models.Entity.objects.count()
 
         kwargs = {'passthrough': 'true', 'fields': 'id', 'page_size': entities_count}
@@ -361,7 +367,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='submission-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         submissions_count = models.Submission.objects.count()
         # Get a list of all projects.
         for project in models.Project.objects.all():
@@ -394,7 +400,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='submission-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         submissions_count = models.Submission.objects.count()
         # Get a list of all mapping sets.
         for mappingset in models.MappingSet.objects.all():
@@ -427,7 +433,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='mapping-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         mappings_count = models.Mapping.objects.count()
         # Get a list of all mapping sets.
         for mappingset in models.MappingSet.objects.all():
@@ -456,7 +462,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='mapping-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         mappings_count = models.Mapping.objects.count()
         # Get a list of all project schemas.
         for projectschema in models.ProjectSchema.objects.all():
@@ -485,7 +491,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='projectschema-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         mappings_count = models.Mapping.objects.count()
         # Get a list of all mappings.
         for mapping in models.Mapping.objects.all():
@@ -514,7 +520,7 @@ class TestFilters(TestCase):
         url = reverse(viewname='mappingset-list')
         # Generate projects.
         for _ in range(random.randint(5, 10)):
-            generate_project()
+            generate_project(group_names=['a'])
         mappingsets_count = models.MappingSet.objects.count()
         # Get a list of all projects.
         for project in models.Project.objects.all():
@@ -552,7 +558,10 @@ class TestFilters(TestCase):
             {'a': {'b': {'c': [1, 2, 3]}}, 'z': 3}
         ]
         gen_payload = generators.ChoicesGenerator(values=payloads)
-        generate_project(submission_field_values={'payload': gen_payload})
+        generate_project(
+            submission_field_values={'payload': gen_payload},
+            group_names=['a'],
+        )
         submissions_count = models.Submission.objects.count()
 
         filtered_submissions_count = 0
@@ -590,7 +599,10 @@ class TestFilters(TestCase):
             {'a': {'b': {'c': [1, 2, 3]}}, 'z': 3}
         ]
         gen_payload = generators.ChoicesGenerator(values=payloads)
-        generate_project(submission_field_values={'payload': gen_payload})
+        generate_project(
+            submission_field_values={'payload': gen_payload},
+            group_names=['a'],
+        )
         submissions_count = models.Submission.objects.count()
 
         filtered_submissions_count = 0
@@ -617,7 +629,10 @@ class TestFilters(TestCase):
 
     def test_submission_filter__by_payload__error(self):
         url = reverse(viewname='submission-list')
-        generate_project(submission_field_values={'payload': {'a': '[1', 'z': 3}})
+        generate_project(
+            submission_field_values={'payload': {'a': '[1', 'z': 3}},
+            group_names=['a'],
+        )
         submissions_count = models.Submission.objects.count()
 
         response = self.client.get(

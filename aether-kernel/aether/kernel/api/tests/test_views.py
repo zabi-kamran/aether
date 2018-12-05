@@ -27,6 +27,9 @@ from django.urls import reverse
 
 from rest_framework import status
 
+from guardian.shortcuts import assign_perm
+
+from aether.common.auth.callbacks import auth_callback
 from aether.kernel.api import models
 from aether.kernel.api.entity_extractor import run_entity_extraction
 
@@ -53,12 +56,21 @@ class ViewsTest(TestCase):
         password = 'testtest'
         self.user = get_user_model().objects.create_user(username, email, password)
         self.assertTrue(self.client.login(username=username, password=password))
+        # TODO: factor this out
+        roles = 'a'
+        auth_callback(None, self.user, {'roles': roles})
 
         # Set up test model instances:
         self.project = models.Project.objects.create(
             revision='rev 1',
             name='a project name',
         )
+        # TODO: use shortcuts
+        for group in self.user.groups.all():
+            assign_perm('view_project', group, self.project)
+            assign_perm('add_project', group, self.project)
+            assign_perm('change_project', group, self.project)
+            assign_perm('delete_project', group, self.project)
 
         self.schema = models.Schema.objects.create(
             name='schema1',
@@ -66,12 +78,20 @@ class ViewsTest(TestCase):
             family='Person',
             definition=EXAMPLE_SCHEMA,
         )
+        assign_perm('view_schema', group, self.schema)
+        assign_perm('add_schema', group, self.schema)
+        assign_perm('change_schema', group, self.schema)
+        assign_perm('delete_schema', group, self.schema)
 
         self.projectschema = models.ProjectSchema.objects.create(
             name='a project schema name',
             project=self.project,
             schema=self.schema,
         )
+        assign_perm('view_projectschema', group, self.projectschema)
+        assign_perm('add_projectschema', group, self.projectschema)
+        assign_perm('change_projectschema', group, self.projectschema)
+        assign_perm('delete_projectschema', group, self.projectschema)
         # update the fake value with a real one
         mapping_definition = dict(EXAMPLE_MAPPING)
         mapping_definition['entities']['Person'] = str(self.projectschema.pk)
@@ -82,22 +102,43 @@ class ViewsTest(TestCase):
             schema={},
             project=self.project,
         )
+        for group in self.user.groups.all():
+            assign_perm('view_mappingset', group, self.mappingset)
+            assign_perm('add_mappingset', group, self.mappingset)
+            assign_perm('change_mappingset', group, self.mappingset)
+            assign_perm('delete_mappingset', group, self.mappingset)
 
         self.mapping = models.Mapping.objects.create(
             name='mapping1',
             definition=mapping_definition,
             mappingset=self.mappingset,
         )
+        for group in self.user.groups.all():
+            assign_perm('view_mapping', group, self.mapping)
+            assign_perm('add_mapping', group, self.mapping)
+            assign_perm('change_mapping', group, self.mapping)
+            assign_perm('delete_mapping', group, self.mapping)
 
         self.submission = models.Submission.objects.create(
             payload=EXAMPLE_SOURCE_DATA,
             mappingset=self.mappingset,
             project=self.project,
         )
+        for group in self.user.groups.all():
+            assign_perm('view_submission', group, self.submission)
+            assign_perm('add_submission', group, self.submission)
+            assign_perm('change_submission', group, self.submission)
+            assign_perm('delete_submission', group, self.submission)
 
         # extract entities
         run_entity_extraction(self.submission)
         self.entity = models.Entity.objects.first()
+        for entity in models.Entity.objects.all():
+            for group in self.user.groups.all():
+                assign_perm('view_entity', group, entity)
+                assign_perm('add_entity', group, entity)
+                assign_perm('change_entity', group, entity)
+                assign_perm('delete_entity', group, entity)
 
     def tearDown(self):
         self.project.delete()
@@ -153,6 +194,7 @@ class ViewsTest(TestCase):
                     'payload': EXAMPLE_SOURCE_DATA,
                     'mappingset': str(self.mappingset.pk),
                 })
+                print('-------------------')
 
         submissions_count = models.Submission \
                                   .objects \
@@ -219,6 +261,7 @@ class ViewsTest(TestCase):
 
     def test_mapping_set_stats_view(self):
         url = reverse('mappingsets_stats-detail', kwargs={'pk': self.mappingset.pk})
+        print('------------------------', url)
         response = self.client.get(url, format='json')
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         json = response.json()
@@ -393,25 +436,55 @@ class ViewsTest(TestCase):
         entity_neg = self.helper_read_linked_data_entities(household_entity, -1)
         self.assertEqual(entity_depth_0, entity_neg, 'in case of depth<0 ... return simple entity')
 
-    def test_project_artefacts__endpoints(self):
-        self.assertEqual(reverse('project-artefacts', kwargs={'pk': 1}), '/projects/1/artefacts/')
+    def test_project__retrieve_artefacts_as_regular_user(self):
+        url = reverse('project-artefacts', kwargs={'pk': self.project.pk})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        response_get_404 = self.client.get('/projects/artefacts/')
-        self.assertEqual(response_get_404.status_code, 404)
-
-        project_id = str(uuid.uuid4())
+    def test_project__retrieve_artefacts_as_admin_user(self):
+        # Create admin user and login before attempting to retrieve project
+        # artefacts.
+        username = 'admin-test'
+        email = 'test.example.com'
+        password = 'password'
+        get_user_model().objects.create_superuser(username, email, password)
+        self.assertTrue(self.client.login(username=username, password=password))
+        project_id = self.project.pk
         url = reverse('project-artefacts', kwargs={'pk': project_id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json().get('project'), str(project_id))
 
-        response_get_404 = self.client.get(url)
-        self.assertEqual(response_get_404.status_code, 404, 'The project does not exist yet')
+    def test_project__patch_artefacts_as_regular_user(self):
+        project_id = self.project.pk
+        url = reverse('project-artefacts', kwargs={'pk': project_id})
+        payload = json.dumps({'name': f'Project {project_id}'})
+        response = self.client.patch(url, payload)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # create project and artefacts
-        response_patch = self.client.patch(
+    def test_project__patch_artefacts_as_admin_user(self):
+        # Create admin user and login.
+        username = 'admin-test'
+        email = 'test@example.com'
+        password = 'testtest'
+        get_user_model().objects.create_superuser(username, email, password)
+        self.assertTrue(self.client.login(username=username, password=password))
+        project_id = str(uuid.uuid4())
+        kwargs = {'pk': project_id}
+        url = reverse('project-artefacts', kwargs=kwargs)
+        response = self.client.get(url)
+        # Expecting 404, since project is not created yet.
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        # Create project and artefacts.
+        response = self.client.patch(
             url,
-            json.dumps({'name': f'Project {project_id}'}),
+            data=json.dumps({
+                'name': f'Project {project_id}',
+                'group_names': ['a'],
+            }),
             content_type='application/json',
         ).json()
-        self.assertEqual(response_patch, {
+        self.assertEqual(response, {
             'project': project_id,
             'schemas': [],
             'project_schemas': [],
@@ -420,30 +493,60 @@ class ViewsTest(TestCase):
         })
         project = models.Project.objects.get(pk=project_id)
         self.assertEqual(project.name, f'Project {project_id}')
-
-        # try to retrieve again
-        response_get = self.client.get(url).json()
-        self.assertEqual(response_get, {
+        # Attempt to retrieve again.
+        response = self.client.get(url).json()
+        self.assertEqual(response, {
             'project': project_id,
             'schemas': [],
             'project_schemas': [],
             'mappings': [],
             'mappingsets': [],
         })
+        # Finally, retrieve the modified project as a regular user. This ensures
+        # that permissions are correctly assigned when resources are created via
+        # /projects/<id>/artefacts/.
+        self.client.logout()
+        self.assertTrue(self.client.login(username='test', password='testtest'))
+        # roles = 'a'
+        # auth_callback(None, self.user, {'roles': roles})
+        url = reverse(
+            'project-detail',
+            kwargs={'pk': response.get('project')}
+        )
+        response = self.client.get(url, content_type='application/json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    def test_project__avro_schemas__endpoints(self):
-        self.assertEqual(reverse('project-avro-schemas', kwargs={'pk': 1}), '/projects/1/avro-schemas/')
+    def test_project_reverse_avro_schemas_url(self):
+        result = reverse('project-avro-schemas', kwargs={'pk': 1})
+        self.assertEqual(result, '/projects/1/avro-schemas/')
 
+    def test_project__patch_avro_schemas_as_regular_user(self):
         project_id = str(uuid.uuid4())
         url = reverse('project-avro-schemas', kwargs={'pk': project_id})
+        # Create project and artefacts.
+        response = self.client.patch(
+            url,
+            json.dumps({'name': f'Project {project_id}'}),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-        # create project and artefacts
-        response_patch = self.client.patch(
+    def test_project__patch_avro_schemas_as_admin_user(self):
+        # Create admin user and login.
+        username = 'admin-test'
+        email = 'test@example.com'
+        password = 'testtest'
+        get_user_model().objects.create_superuser(username, email, password)
+        self.assertTrue(self.client.login(username=username, password=password))
+        project_id = str(uuid.uuid4())
+        url = reverse('project-avro-schemas', kwargs={'pk': project_id})
+        # Create project and artefacts.
+        response = self.client.patch(
             url,
             json.dumps({'name': f'Project {project_id}'}),
             content_type='application/json',
         ).json()
-        self.assertEqual(response_patch, {
+        self.assertEqual(response, {
             'project': project_id,
             'schemas': [],
             'project_schemas': [],

@@ -23,6 +23,8 @@ from django.db import models
 from django_prometheus.models import ExportModelOperationsMixin
 from model_utils.models import TimeStampedModel
 
+from aether.common.auth.permissions import assign_permissions_via_project
+
 from .utils import validate_contract
 
 
@@ -88,6 +90,9 @@ class Pipeline(ExportModelOperationsMixin('ui_pipeline'), TimeStampedModel):
         app_label = 'ui'
         default_related_name = 'pipelines'
         ordering = ('name',)
+        permissions = (
+            ('view_pipeline', 'Can view pipeline'),
+        )
 
 
 class Contract(ExportModelOperationsMixin('ui_contract'), TimeStampedModel):
@@ -198,6 +203,8 @@ class Contract(ExportModelOperationsMixin('ui_contract'), TimeStampedModel):
         self.output = output
 
         super(Contract, self).save(*args, **kwargs)
+        # TODO: rename assign_permissions_via_project?
+        assign_permissions_via_project(self.pipeline, self)
 
     class Meta:
         app_label = 'ui'
@@ -207,3 +214,6 @@ class Contract(ExportModelOperationsMixin('ui_contract'), TimeStampedModel):
             models.Index(fields=['pipeline', '-modified']),
             models.Index(fields=['-modified']),
         ]
+        permissions = (
+            ('view_contract', 'Can view contract'),
+        )

@@ -19,43 +19,45 @@
 from django.contrib import admin
 from reversion_compare.admin import CompareVersionAdmin
 
+from guardian.admin import GuardedModelAdmin
+
 from .api import models, forms
 
 
-class ProjectAdmin(CompareVersionAdmin):
+class ProjectAdmin(GuardedModelAdmin, CompareVersionAdmin):
     list_display = ('id', 'name', 'revision',)
     readonly_fields = ('id',)
 
 
-class MappingAdmin(CompareVersionAdmin):
+class MappingAdmin(GuardedModelAdmin, CompareVersionAdmin):
     form = forms.MappingForm
     list_display = ('id', 'name', 'revision',)
     readonly_fields = ('id',)
 
 
-class MappingSetAdmin(CompareVersionAdmin):
+class MappingSetAdmin(GuardedModelAdmin, CompareVersionAdmin):
     list_display = ('id', 'name', 'revision', 'project',)
     readonly_fields = ('id',)
 
 
-class SubmissionAdmin(CompareVersionAdmin):
+class SubmissionAdmin(GuardedModelAdmin, CompareVersionAdmin):
     form = forms.SubmissionForm
     list_display = ('id', 'revision', 'mappingset',)
     readonly_fields = ('id',)
 
 
-class SchemaAdmin(CompareVersionAdmin):
+class SchemaAdmin(GuardedModelAdmin, CompareVersionAdmin):
     form = forms.SchemaForm
     list_display = ('id', 'name', 'revision',)
     readonly_fields = ('id',)
 
 
-class ProjectSchemaAdmin(CompareVersionAdmin):
+class ProjectSchemaAdmin(GuardedModelAdmin, CompareVersionAdmin):
     list_display = ('id', 'name', 'is_encrypted', 'project', 'schema',)
     readonly_fields = ('id',)
 
 
-class EntityAdmin(CompareVersionAdmin):
+class EntityAdmin(GuardedModelAdmin, CompareVersionAdmin):
     form = forms.EntityForm
     list_display = ('id', 'revision', 'status', 'projectschema',  'submission',)
     readonly_fields = ('id', 'submission',)

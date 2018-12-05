@@ -23,10 +23,12 @@ Django==1.11.16
 django-cas-ng==3.5.10
 django-cors-headers==2.4.0
 django-debug-toolbar==1.10.1
+django-guardian==1.4.9
 django-prometheus==1.0.15
 django-storages==1.7.1
 django-ums-client==0.2.6
 djangorestframework==3.9.0
+djangorestframework-guardian==0.1.1
 docutils==0.14
 drf-dynamic-fields==0.3.0
 flake8==3.6.0
@@ -69,3 +71,9 @@ unittest2==1.1.0
 urllib3==1.24
 uWSGI==2.0.17.1
 xlrd==1.1.0
+
+
+
+ipython
+ipdb
+django-pdb

@@ -23,7 +23,9 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TransactionTestCase
+from django.test import TestCase
+
+from aether.common.auth.permissions import assign_permissions
 
 from ..models import Project, XForm, MediaFile
 from ..surveyors_utils import get_surveyor_group
@@ -240,7 +242,7 @@ class MockResponse:
         return self.json_data
 
 
-class CustomTestCase(TransactionTestCase):
+class CustomTestCase(TestCase):
 
     def setUp(self):
         self.surveyor_group = get_surveyor_group()
@@ -317,7 +319,7 @@ class CustomTestCase(TransactionTestCase):
         surveyor.save()
         return surveyor
 
-    def helper_create_project(self, project_id=None, surveyor=None):
+    def helper_create_project(self, project_id=None, surveyor=None, group_names=None):
         if project_id is None:
             project_id = self.helper_create_uuid()
 
@@ -335,6 +337,9 @@ class CustomTestCase(TransactionTestCase):
                 project.surveyors.add(surveyor)
             project.save()
 
+        if group_names:
+            assign_permissions(group_names, project)
+
         return project
 
     def helper_create_xform(self,
@@ -342,7 +347,8 @@ class CustomTestCase(TransactionTestCase):
                             surveyor=None,
                             xml_data=None,
                             with_media=False,
-                            with_version=True):
+                            with_version=True,
+                            group_names=None):
         if not xml_data:
             if with_version:
                 xml_data = self.samples['xform']['xml-ok']
@@ -370,5 +376,8 @@ class CustomTestCase(TransactionTestCase):
                 xform=xform,
                 media_file=SimpleUploadedFile('sample.txt', b'abc'),
             )
+
+        if group_names:
+            assign_permissions(group_names, xform)
 
         return xform

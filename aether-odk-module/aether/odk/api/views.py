@@ -43,6 +43,10 @@ from aether.common.kernel.utils import (
     get_submissions_url,
     submit_to_kernel,
 )
+from aether.common.auth.permissions import (
+    CreateWithPermissionsMixin,
+    CustomObjectPermissions,
+)
 from ..settings import LOGGING_LEVEL
 
 from .models import Project, XForm, MediaFile
@@ -119,7 +123,10 @@ MSG_SUBMISSION_SUBMIT_SUCCESS_ID = _(
 )
 
 
-class ProjectViewSet(viewsets.ModelViewSet):
+# TODO: move to permissions
+from rest_framework.permissions import DjangoObjectPermissions  # pragma: nocover
+
+class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''
     Create new Project entries.
     '''
@@ -129,6 +136,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
                       .order_by('name')
     serializer_class = ProjectSerializer
     search_fields = ('name',)
+    permission_classes = (CustomObjectPermissions,)
 
     @action(detail=True, methods=['patch'])
     def propagate(self, request, pk=None, *args, **kwargs):
@@ -151,7 +159,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, pk, *args, **kwargs)
 
 
-class XFormViewSet(viewsets.ModelViewSet):
+class XFormViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''
     Create new xForms entries providing:
 
@@ -165,6 +173,7 @@ class XFormViewSet(viewsets.ModelViewSet):
                     .order_by('title')
     serializer_class = XFormSerializer
     search_fields = ('title', 'description', 'xml_data',)
+    permission_classes = (CustomObjectPermissions,)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -197,7 +206,7 @@ class XFormViewSet(viewsets.ModelViewSet):
         return self.retrieve(request, pk, *args, **kwargs)
 
 
-class MediaFileViewSet(viewsets.ModelViewSet):
+class MediaFileViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''
     Create new Media File entries.
     '''
@@ -205,9 +214,10 @@ class MediaFileViewSet(viewsets.ModelViewSet):
     queryset = MediaFile.objects.order_by('name')
     serializer_class = MediaFileSerializer
     search_fields = ('name', 'xform__title',)
+    permission_classes = (CustomObjectPermissions,)
 
 
-class SurveyorViewSet(viewsets.ModelViewSet):
+class SurveyorViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''
     Create new Surveyors entries providing:
 
@@ -219,6 +229,7 @@ class SurveyorViewSet(viewsets.ModelViewSet):
     queryset = get_surveyors()
     serializer_class = SurveyorSerializer
     search_fields = ('username',)
+    permission_classes = (CustomObjectPermissions,)
 
     def get_queryset(self):
         queryset = self.queryset

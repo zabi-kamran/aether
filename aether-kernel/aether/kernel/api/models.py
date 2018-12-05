@@ -22,6 +22,13 @@ import uuid
 from datetime import datetime
 from hashlib import md5
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import models
+from django.db.utils import IntegrityError
+
+from guardian.shortcuts import assign_perm, get_perms, get_groups_with_perms
+from django.contrib.auth.models import User, Group
+
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
@@ -31,6 +38,7 @@ from django_prometheus.models import ExportModelOperationsMixin
 from model_utils.models import TimeStampedModel
 
 from aether.common.utils import resolve_file_url
+from aether.common.auth.permissions import assign_permissions_via_project
 
 from .constants import NAMESPACE
 from .utils import json_prettified
@@ -164,6 +172,9 @@ class Project(ExportModelOperationsMixin('kernel_project'), TimeStampedModel):
         ]
         verbose_name = _('project')
         verbose_name_plural = _('projects')
+        permissions = (
+                ('view_project', 'View project'),
+        )
 
 
 class MappingSet(ExportModelOperationsMixin('kernel_mappingset'), TimeStampedModel):
@@ -216,6 +227,13 @@ class MappingSet(ExportModelOperationsMixin('kernel_mappingset'), TimeStampedMod
         ]
         verbose_name = _('mapping set')
         verbose_name_plural = _('mapping sets')
+        permissions = (
+            ('view_mappingset', 'Can view MappingSet'),
+        )
+
+    def save(self, **kwargs):
+        super(MappingSet, self).save(**kwargs)
+        assign_permissions_via_project(self.project, self)
 
 
 class Submission(ExportModelOperationsMixin('kernel_submission'), TimeStampedModel):
@@ -263,6 +281,7 @@ class Submission(ExportModelOperationsMixin('kernel_submission'), TimeStampedMod
     def save(self, *args, **kwargs):
         self.project = self.mappingset.project
         super(Submission, self).save(*args, **kwargs)
+        assign_permissions_via_project(self.project, self)
 
     class Meta:
         app_label = 'kernel'
@@ -274,6 +293,9 @@ class Submission(ExportModelOperationsMixin('kernel_submission'), TimeStampedMod
         ]
         verbose_name = _('submission')
         verbose_name_plural = _('submissions')
+        permissions = (
+            ('view_submission', 'Can view Submission'),
+        )
 
 
 def __attachment_path__(instance, filename):
@@ -336,6 +358,7 @@ class Attachment(ExportModelOperationsMixin('kernel_attachment'), TimeStampedMod
             self.name = self.attachment_file.name
 
         super(Attachment, self).save(*args, **kwargs)
+        assign_permissions_via_project(self.submission.project, self)
 
     class Meta:
         app_label = 'kernel'
@@ -346,6 +369,9 @@ class Attachment(ExportModelOperationsMixin('kernel_attachment'), TimeStampedMod
         ]
         verbose_name = _('attachment')
         verbose_name_plural = _('attachments')
+        permissions = (
+            ('view_attachment', 'Can view Attachment'),
+        )
 
 
 class Schema(ExportModelOperationsMixin('kernel_schema'), TimeStampedModel):
@@ -395,6 +421,9 @@ class Schema(ExportModelOperationsMixin('kernel_schema'), TimeStampedModel):
         ]
         verbose_name = _('schema')
         verbose_name_plural = _('schemas')
+        permissions = (
+            ('view_schema', 'Can view Schema'),
+        )
 
 
 class ProjectSchema(ExportModelOperationsMixin('kernel_projectschema'), TimeStampedModel):
@@ -439,6 +468,13 @@ class ProjectSchema(ExportModelOperationsMixin('kernel_projectschema'), TimeStam
         ]
         verbose_name = _('project schema')
         verbose_name_plural = _('project schemas')
+        permissions = (
+            ('view_projectschema', 'Can view ProjectSchema'),
+        )
+
+    def save(self, **kwargs):
+        super(ProjectSchema, self).save(**kwargs)
+        assign_permissions_via_project(self.project, self)
 
 
 class Mapping(ExportModelOperationsMixin('kernel_mapping'), TimeStampedModel):
@@ -500,6 +536,7 @@ class Mapping(ExportModelOperationsMixin('kernel_mapping'), TimeStampedModel):
             raise IntegrityError(ve)
 
         super(Mapping, self).save(*args, **kwargs)
+        assign_permissions_via_project(self.project, self)
 
         self.projectschemas.clear()
         entities = self.definition.get('entities', {})
@@ -525,6 +562,9 @@ class Mapping(ExportModelOperationsMixin('kernel_mapping'), TimeStampedModel):
         ]
         verbose_name = _('mapping')
         verbose_name_plural = _('mappings')
+        permissions = (
+            ('view_mapping', 'Can view Mapping'),
+        )
 
 
 class Entity(ExportModelOperationsMixin('kernel_entity'), models.Model):
@@ -663,6 +703,8 @@ class Entity(ExportModelOperationsMixin('kernel_entity'), models.Model):
             raise IntegrityError(ve)
 
         super(Entity, self).save(*args, **kwargs)
+        if self.projectschema:
+            assign_permissions_via_project(self.projectschema.project, self)
 
     class Meta:
         app_label = 'kernel'
@@ -675,3 +717,6 @@ class Entity(ExportModelOperationsMixin('kernel_entity'), models.Model):
         ]
         verbose_name = _('entity')
         verbose_name_plural = _('entities')
+        permissions = (
+            ('view_entity', 'Can view Entity'),
+        )

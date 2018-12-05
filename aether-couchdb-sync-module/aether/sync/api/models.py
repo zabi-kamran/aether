@@ -25,6 +25,8 @@ from django.dispatch import receiver
 from django.utils.translation import ugettext as _
 from django_prometheus.models import ExportModelOperationsMixin
 
+from aether.common.auth.permissions import assign_permissions_via_project
+
 from .couchdb_helpers import delete_user, generate_db_name
 
 
@@ -87,6 +89,9 @@ class Project(ExportModelOperationsMixin('couchdbsync_project'), models.Model):
         ordering = ['name']
         verbose_name = _('project')
         verbose_name_plural = _('projects')
+        permissions = (
+            ('view_project', 'Can view project'),
+        )
 
 
 class Schema(ExportModelOperationsMixin('couchdbsync_schema'), models.Model):
@@ -126,6 +131,7 @@ class Schema(ExportModelOperationsMixin('couchdbsync_schema'), models.Model):
             # try to get it from the AVRO schema
             self.name = self.avro_schema.get('name')
         super(Schema, self).save(*args, **kwargs)
+        assign_permissions_via_project(self.project, self)
 
     class Meta:
         app_label = 'sync'
@@ -133,6 +139,9 @@ class Schema(ExportModelOperationsMixin('couchdbsync_schema'), models.Model):
         ordering = ['name']
         verbose_name = _('schema')
         verbose_name_plural = _('schemas')
+        permissions = (
+            ('view_schema', 'Can view schema'),
+        )
 
 
 class MobileUser(ExportModelOperationsMixin('couchdbsync_mobileuser'), models.Model):
@@ -156,6 +165,9 @@ class MobileUser(ExportModelOperationsMixin('couchdbsync_mobileuser'), models.Mo
         ordering = ['email']
         verbose_name = _('mobile user')
         verbose_name_plural = _('mobile users')
+        permissions = (
+            ('view_mobileuser', 'Can view mobile user'),
+        )
 
 
 class DeviceDB(ExportModelOperationsMixin('couchdbsync_devicedb'), models.Model):
@@ -202,6 +214,9 @@ class DeviceDB(ExportModelOperationsMixin('couchdbsync_devicedb'), models.Model)
         ordering = ['-last_synced_date']
         verbose_name = _('device')
         verbose_name_plural = _('devices')
+        permissions = (
+            ('view_devicedb', 'Can view device'),
+        )
 
 
 @receiver(pre_delete, sender=MobileUser)
