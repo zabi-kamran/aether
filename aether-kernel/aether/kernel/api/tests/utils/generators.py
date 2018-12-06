@@ -27,8 +27,8 @@ from aether.kernel.api import models
 from aether.kernel.api.avro_tools import random_avro
 from aether.kernel.api.entity_extractor import run_entity_extraction
 
-MAPPINGS_COUNT_RANGE = (1, 3)
-SUBMISSIONS_COUNT_RANGE = (5, 10)
+MAPPINGS_COUNT_RANGE = (1, 1)
+SUBMISSIONS_COUNT_RANGE = (1, 1)
 
 
 def schema_definition():
@@ -108,7 +108,6 @@ def generate_project(
     >>> names = generators.ChoicesGenerator(values=['a', 'b', 'c'])
     >>> generate_project(project_field_values={'name': names})
     '''
-
     project = AutoFixture(
         models.Project,
         field_values=get_field_values(
@@ -117,7 +116,6 @@ def generate_project(
         ),
     ).create_one()
     assign_permissions(group_names, project)
-
     schema = AutoFixture(
         model=models.Schema,
         field_values=get_field_values(
@@ -128,7 +126,6 @@ def generate_project(
         ),
     ).create_one()
     assign_permissions(group_names, schema)
-
     projectschema = AutoFixture(
         model=models.ProjectSchema,
         field_values=get_field_values(
@@ -139,7 +136,6 @@ def generate_project(
             values=projectschema_field_values,
         ),
     ).create_one()
-    assign_permissions(group_names, projectschema)
 
     for _ in range(random.randint(*MAPPINGS_COUNT_RANGE)):
         mappingset = AutoFixture(
@@ -152,13 +148,11 @@ def generate_project(
                 values=mappingset_field_values,
             ),
         ).create_one()
-        assign_permissions(group_names, mappingset)
-
         # create a random input based on the schema
+        
         if not mappingset.input and mappingset.schema:
             mappingset.input = random_avro(mappingset.schema)
             mappingset.save()
-
         mapping = AutoFixture(
             model=models.Mapping,
             field_values=get_field_values(
@@ -170,8 +164,8 @@ def generate_project(
                 values=mapping_field_values,
             ),
         ).create_one()
-        assign_permissions(group_names, mapping)
 
+        # TODO: use bulk create to speed up tests?
         for _ in range(random.randint(*SUBMISSIONS_COUNT_RANGE)):
             submission = AutoFixture(
                 model=models.Submission,
@@ -185,9 +179,5 @@ def generate_project(
                     values=submission_field_values,
                 ),
             ).create_one()
-            assign_permissions(group_names, submission)
-
             # extract entities
             run_entity_extraction(submission)
-            for entity in submission.entities.all():
-                assign_permissions(group_names, entity)

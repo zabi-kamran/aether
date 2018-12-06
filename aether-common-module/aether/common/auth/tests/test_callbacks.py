@@ -12,9 +12,13 @@ class CallbacksTest(TestCase):
             username='test',
             password='testtest',
         )
-        permissions = ['view', 'add', 'delete', 'change']
         attributes = {
-            'roles': 'org1:add_token'
+            'roles': 'org1:add,org1:delete,org1:change',
         }
-        auth_callback(None, user, attributes)
-
+        print(Group.objects.count())
+        auth_callback('common')(None, user, attributes)
+        for group in Group.objects.all():
+            print('---------------', group)
+            for permission in group.permissions.all():
+                print(permission)
+        print(Group.objects.count())

@@ -43,6 +43,8 @@ def assign_permissions(group_names, instance):  # pragma: nocover
         for group_name in group_names:
             group, _ = Group.objects.get_or_create(name=group_name)
             perms = get_perms_for_model(instance)
+            # TODO: use group names directly, e.g.
+            # org1:view_project -> Permission(codename='view_project')
             for p in perms:
                 group.permissions.add(p)
                 assign_perm(p.codename, group, instance)

@@ -24,8 +24,10 @@ import uuid
 from django.utils import timezone
 from django.utils.translation import ugettext as _
 
+from guardian.shortcuts import get_groups_with_perms
 from rest_framework import status
 
+from aether.common.auth.permissions import assign_permissions
 from aether.common.kernel import utils
 
 
@@ -154,6 +156,27 @@ def validate_contract(contract):
         return (errors, [])
 
 
+def kernel_permissions_to_ui_permissions(permissions):
+    ui_permissions = [
+        'view_pipeline',
+        'add_pipeline',
+        'delete_pipeline',
+        'change_pipeline',
+        'view_contract',
+        'add_contract',
+        'delete_contract',
+        'change_contract',
+    ]
+    result = []
+    for kernel_permission in permissions:
+        print(kernel_permission)
+        organisation = kernel_permission.split(':')[0]
+        for ui_permission in ui_permissions:
+            group_name = f'{organisation}:{ui_permission}'
+            result.append(group_name)
+    return result
+
+
 def kernel_to_pipeline():
     '''
     Fetches all mappingsets in kernel and tranform them into pipelines,
@@ -177,6 +200,29 @@ def kernel_to_pipeline():
                 input=mappingset['input'],
                 mappingset=mappingset_id,
             )
+        groups_with_permissions = mappingset.get('groups_with_permissions', [])
+        result = kernel_permissions_to_ui_permissions(groups_with_permissions)
+        if result:
+            import ipdb; ipdb.set_trace()
+        # organisations = [group.split(':')[0] for group in groups_with_permissions]
+        # groups_with_permissions = [
+        #     'org1:kernel:add_project',
+        #     'org1:kernel:view_project',
+        #     'org1:kernel:change_project',
+        #     'org1:kernel:delete_project',
+        # ]
+        # TODO:
+        # group org1:view has read permissions
+        # assigning a group permission to an instance doesn't say anything about
+        # which user can access it.
+        # assign_permission(Group(org1.kernel.Project.read), pipeline)
+        # incoming permissions
+        #     org1:kernel:project:read, org1:kernel:project:write
+        #     org2:kernel:project:read, org2:kernel:project:view
+        # resulting permissions:
+        #     org1:ui:pipeline:read, org1:kernel:pipeline:write
+        #     org2:ui:pipeline:read, org1:kernel:pipeline:write
+        assign_permissions(groups_with_permissions, pipeline)
 
         # fetch linked mappings
         url = f'{KERNEL_URL}/mappings/?mappingset={mappingset_id}'
@@ -355,6 +401,7 @@ def publish_contract(project_name, contract, objects_to_overwrite={}):
     ]
     entities = {schema['name']: schema['id'] for schema in schemas}
 
+    group_names = [group.name for group in get_groups_with_perms(pipeline)]
     # payload to POST to kernel with the contract artefacts
     data = {
         'name': project_name,
@@ -385,6 +432,7 @@ def publish_contract(project_name, contract, objects_to_overwrite={}):
             'is_active': True,
             'is_ready_only': contract.is_read_only,
         }],
+        'group_names': group_names,
     }
 
     try:

@@ -94,6 +94,25 @@ Data model schema:
                                                  +--------------------------+
 '''
 
+# def assign_permissions_via_project(project, instance):  # pragma: nocover
+#     import time
+#     groups = get_groups_with_perms(project)
+#     for group in groups.all():
+#         try:
+#             project_permissions = get_perms(group, project)
+#         except Exception:
+#             # TODO: log
+#             # import ipdb; ipdb.set_trace()
+#             return
+#         for project_permission in project_permissions:
+#             permission = project_permission.split('_')[0] + '_' + instance.__class__.__name__.lower()
+#             try:
+#                 assign_perm(permission, group, instance)
+#             except Exception:
+#                 # TODO: log
+#                 # import ipdb; ipdb.set_trace()
+#                 return
+
 
 class Project(ExportModelOperationsMixin('kernel_project'), TimeStampedModel):
     '''

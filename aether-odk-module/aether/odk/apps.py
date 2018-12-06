@@ -24,7 +24,4 @@ class Config(AppConfig):
     verbose_name = 'Aether ODK'
 
     def ready(self):
-        # TODO: coverage for this?
-        from django_cas_ng.signals import cas_user_authenticated  # pragma: nocover
-        from aether.common.auth.callbacks import auth_callback
-        cas_user_authenticated.connect(auth_callback)  # pragma: nocover
+        import aether.odk.api.callbacks

@@ -44,9 +44,6 @@ class PipelineViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     pagination_class = None
     permission_classes = (CustomObjectPermissions,)
 
-    def create(self, request, *args, **kwargs):
-        return create_with_permissions(self, request, *args, **kwargs)
-
     @action(methods=['post'], detail=False)
     def fetch(self, request):
         '''
@@ -98,8 +95,6 @@ class ContractViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     ordering = ('name',)
     permission_classes = (CustomObjectPermissions,)
 
-    def create(self, request, *args, **kwargs):
-        return create_with_permissions(self, request, *args, **kwargs)
 
 @api_view(['GET'])
 def get_kernel_url(request):

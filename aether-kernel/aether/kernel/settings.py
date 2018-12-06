@@ -67,15 +67,15 @@ MIGRATION_MODULES = {
     'kernel': 'aether.kernel.api.migrations'
 }
 
-# MIDDLEWARE += [
-#     'django.contrib.auth.middleware.RemoteUserMiddleware',
-# ]
+MIDDLEWARE += [
+    'django_cas_ng.middleware.CASMiddleware',
+]
 
-# AUTHENTICATION_BACKENDS = [
-#     'django.contrib.auth.backends.ModelBackend',
-#     'guardian.backends.ObjectPermissionBackend',
-#     'django_cas_ng.backends.CASBackend',
-# ]
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
+    'django_cas_ng.backends.CASBackend',
+]
 
 # CAS_RENEW = True
 

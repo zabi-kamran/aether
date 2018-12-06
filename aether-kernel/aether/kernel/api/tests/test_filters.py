@@ -490,7 +490,7 @@ class TestFilters(TestCase):
     def test_projectschema_filter__by_mapping(self):
         url = reverse(viewname='projectschema-list')
         # Generate projects.
-        for _ in range(random.randint(5, 10)):
+        for _ in range(random.randint(3, 6)):
             generate_project(group_names=['a'])
         mappings_count = models.Mapping.objects.count()
         # Get a list of all mappings.

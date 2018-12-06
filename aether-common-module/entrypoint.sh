@@ -82,6 +82,7 @@ case "$1" in
     build)
         # test before building
         test_flake8
+        # TODO: reactivate coverage
         test_coverage
 
         # remove previous build if needed

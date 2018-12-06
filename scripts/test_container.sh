@@ -75,7 +75,8 @@ then
 fi
 # $DC_TEST run "$1"-test test aether.ui.api.tests.test_views.ViewsTest.test__pipeline__and__contract__viewsets
 # $DC_TEST run "$1"-test test  aether.ui.api.tests.test_views.ViewsTest.test__pipeline__fetch
-$DC_TEST run "$1"-test test aether.ui.api.tests.test_models.ModelsTests.test_permissions
+# $DC_TEST run "$1"-test test aether.ui.api.tests.test_models.ModelsTests.test_permissions
+$DC_TEST run "$1"-test test
 echo "_____________________________________________ $1 tests passed!"
 
 

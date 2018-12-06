@@ -288,6 +288,9 @@ if CAS_SERVER_URL:
     AUTHENTICATION_BACKENDS += [
         'django_cas_ng.backends.CASBackend',
     ]
+    MIDDLEWARE += [
+        'django_cas_ng.middleware.CASMiddleware',
+    ]
     CAS_VERSION = 3
     CAS_LOGOUT_COMPLETELY = True
     HOSTNAME = os.environ['HOSTNAME']
