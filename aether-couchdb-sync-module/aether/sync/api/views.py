@@ -68,9 +68,6 @@ class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     search_fields = ('name',)
     permission_classes = (CustomObjectPermissions,)
 
-    def create(self, request, *args, **kwargs):
-        return create_with_permissions(self, request, *args, **kwargs)
-
     @action(detail=True, methods=['patch'])
     def propagate(self, request, pk=None, *args, **kwargs):
         '''
@@ -101,9 +98,6 @@ class SchemaViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     serializer_class = SchemaSerializer
     search_fields = ('name', 'avro_schema',)
     permission_classes = (CustomObjectPermissions,)
-
-    def create(self, request, *args, **kwargs):
-        return create_with_permissions(self, request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = self.queryset
@@ -144,9 +138,6 @@ class MobileUserViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     serializer_class = MobileUserSerializer
     search_fields = ('email',)
     permission_classes = (CustomObjectPermissions,)
-
-    def create(self, request, *args, **kwargs):
-        return create_with_permissions(self, request, *args, **kwargs)
 
 
 # Sync credentials endpoint

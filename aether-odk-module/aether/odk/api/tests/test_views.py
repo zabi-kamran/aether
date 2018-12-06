@@ -23,7 +23,12 @@ from rest_framework import status
 from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
-from . import CustomTestCase
+from . import (
+    CustomTestCase,
+    trigger_auth_callback,
+    default_auth_attributes,
+    default_auth_roles,
+)
 
 
 class ViewsTests(CustomTestCase):
@@ -31,7 +36,7 @@ class ViewsTests(CustomTestCase):
     def setUp(self):
         super(ViewsTests, self).setUp()
         self.helper_create_user()
-        auth_callback(None, self.user, {'roles': 'a'})
+        trigger_auth_callback(self.user)
         self.xform = self.helper_create_xform(with_media=True, with_version=False)
         self.formIdXml = '<formID>%s</formID>' % self.xform.form_id
         self.url_get_form = self.xform.download_url
@@ -181,7 +186,7 @@ class ViewsTests(CustomTestCase):
     def test__xform__filters(self):
         self.xform.delete()  # remove default xform
         project_ids = {i: self.helper_create_uuid() for i in range(4)}
-        group_names = ['a']
+        group_names = default_auth_roles
         self.helper_create_xform(project_id=project_ids[0], group_names=group_names)
         self.helper_create_xform(project_id=project_ids[0], group_names=group_names)
         self.helper_create_xform(project_id=project_ids[1], group_names=group_names)
@@ -217,7 +222,7 @@ class ViewsTests(CustomTestCase):
         c = self.helper_create_surveyor(username='peter-doe')
         d = self.helper_create_surveyor(username='paul-pan')
         for user in [a, b, c, d]:
-            assign_permissions(['a'], user)
+            assign_permissions(default_auth_roles, user)
 
         response = self.client.get('/surveyors.json', **self.headers_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -242,7 +247,6 @@ class ViewsTests(CustomTestCase):
     def test__surveyors__by_project(self):
         project_ids = {i: self.helper_create_uuid() for i in range(4)}
         # create surveyors
-        auth_callback(None, self.user, {'roles': 'a'})
         a = self.helper_create_surveyor(username='a')
         b = self.helper_create_surveyor(username='b')
         c = self.helper_create_surveyor(username='c')
@@ -251,7 +255,7 @@ class ViewsTests(CustomTestCase):
         # create xforms with or without surveyors
         self.xform.delete()  # remove default xform
         for user in [a, b, c, d]:
-            assign_permissions(['a'], user)
+            assign_permissions(default_auth_roles, user)
 
         response = self.client.get('/surveyors.json', **self.headers_user)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

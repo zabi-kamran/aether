@@ -3,4 +3,3 @@ from aether.common.auth.callbacks import auth_callback
 
 odk_auth_callback = auth_callback('odk')
 cas_user_authenticated.connect(odk_auth_callback)
-

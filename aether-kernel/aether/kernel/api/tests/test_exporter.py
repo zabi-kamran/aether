@@ -231,7 +231,7 @@ class ExporterViewsTest(TestCase):
         self.assertTrue(self.client.login(username=username, password=password))
 
         roles = 'a'
-        auth_callback(None, self.user, {'roles': roles})
+        auth_callback('kernel')(None, self.user, {'roles': roles})
 
         with open(os.path.join(here, 'files/export.avsc'), 'rb') as infile:
             EXAMPLE_SCHEMA = json.load(infile)

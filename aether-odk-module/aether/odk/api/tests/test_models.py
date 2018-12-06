@@ -26,7 +26,12 @@ from guardian.shortcuts import get_perms_for_model
 from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
-from . import CustomTestCase
+from . import (
+    CustomTestCase,
+    trigger_auth_callback,
+    default_auth_attributes,
+    default_auth_roles,
+)
 from ..models import Project, XForm, MediaFile
 
 
@@ -229,11 +234,10 @@ class ModelsTests(CustomTestCase):
             username='test',
             password='testtest',
         )
-        roles = 'a-group'
-        auth_callback(None, user, {'roles': roles})
+        trigger_auth_callback(user)
         project = Project.objects.create()
         self.assert_has_no_permissions(user, project)
-        assign_permissions([roles], project)
+        assign_permissions(default_auth_roles, project)
         self.assert_has_permissions(user, project)
         xform = XForm.objects.create(
             project=project,

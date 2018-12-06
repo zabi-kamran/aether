@@ -17,11 +17,30 @@
 # under the License.
 
 import re
-from django.test import TransactionTestCase
+from django.test import TransactionTestCase, TestCase
 
+from ..callbacks import sync_auth_callback
 from ...couchdb import api
 
 db_name_test = re.compile('^device_test_')
+
+default_auth_roles = [
+    'org1:view',
+    'org1:add',
+    'org1:delete',
+    'org1:change',
+]
+
+
+default_auth_attributes = {
+    'roles': ','.join(default_auth_roles)
+}
+
+
+def trigger_auth_callback(user, attributes=None):
+    if not attributes:
+        attributes = default_auth_attributes
+    sync_auth_callback(sender=None, user=user, attributes=attributes)
 
 
 def clean_couch():

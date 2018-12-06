@@ -378,7 +378,7 @@ class ModelsTests(TransactionTestCase):
             password='testtest',
         )
         roles = 'a-group'
-        auth_callback(None, user, {'roles': roles})
+        auth_callback('kernel')(None, user, {'roles': roles})
         project = models.Project.objects.create(name='a-project')
         self.assert_has_no_permissions(user, project)
         assign_permissions([roles], project)

@@ -68,7 +68,7 @@ class ViewsTest(TestCase):
         user = get_user_model().objects.create_user(username, email, password)
         self.user = user
         self.assertTrue(self.client.login(username=username, password=password))
-        auth_callback(None, user, {'roles': 'a'})
+        auth_callback('ui')(None, user, {'roles': 'a'})
 
         # save the list of project and schema ids created by the test
         # to remove them in the tearDown method

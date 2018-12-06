@@ -27,6 +27,7 @@ from django.test import TestCase
 
 from aether.common.auth.permissions import assign_permissions
 
+from ..callbacks import odk_auth_callback
 from ..models import Project, XForm, MediaFile
 from ..surveyors_utils import get_surveyor_group
 
@@ -240,6 +241,25 @@ class MockResponse:
 
     def json(self):
         return self.json_data
+
+
+default_auth_roles = [
+    'org1:view',
+    'org1:add',
+    'org1:delete',
+    'org1:change',
+]
+
+
+default_auth_attributes = {
+    'roles': ','.join(default_auth_roles)
+}
+
+
+def trigger_auth_callback(user, attributes=None):
+    if not attributes:
+        attributes = default_auth_attributes
+    odk_auth_callback(sender=None, user=user, attributes=attributes)
 
 
 class CustomTestCase(TestCase):

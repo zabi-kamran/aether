@@ -39,7 +39,7 @@ class TestFilters(TestCase):
         self.user = get_user_model().objects.create_user(username, email, password)
         self.assertTrue(self.client.login(username=username, password=password))
         roles = 'a'
-        auth_callback(None, self.user, {'roles': roles})
+        auth_callback('kernel')(None, self.user, {'roles': roles})
 
     def test_project_filter__by_schema(self):
         url = reverse(viewname='project-list')

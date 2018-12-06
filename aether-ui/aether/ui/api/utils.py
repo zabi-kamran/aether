@@ -157,16 +157,6 @@ def validate_contract(contract):
 
 
 def kernel_permissions_to_ui_permissions(permissions):
-    ui_permissions = [
-        'view_pipeline',
-        'add_pipeline',
-        'delete_pipeline',
-        'change_pipeline',
-        'view_contract',
-        'add_contract',
-        'delete_contract',
-        'change_contract',
-    ]
     result = []
     for kernel_permission in permissions:
         print(kernel_permission)

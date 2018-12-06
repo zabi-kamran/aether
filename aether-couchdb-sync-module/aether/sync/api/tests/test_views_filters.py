@@ -23,6 +23,7 @@ from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
 from ..models import Project, Schema
+from . import ApiTestCase, trigger_auth_callback, default_auth_roles
 
 
 class FilterViewsTests(TestCase):
@@ -35,7 +36,7 @@ class FilterViewsTests(TestCase):
         password = 'testtest'
         self.user = get_user_model().objects.create_user(username, email, password)
         self.assertTrue(self.client.login(username=username, password=password))
-        auth_callback(None, self.user, {'roles': 'a'})
+        trigger_auth_callback(self.user)
 
     def tearDown(self):
         super(FilterViewsTests, self).tearDown()
@@ -50,7 +51,7 @@ class FilterViewsTests(TestCase):
 
         for project_index, project_name in zip([0, 0, 1, 2], ['1', '2', '3', '4']):
             schema = Schema.objects.create(project=projects[project_index], name=project_name, avro_schema={})
-            assign_permissions(group_names=['a'], instance=schema)
+            assign_permissions(group_names=default_auth_roles, instance=schema)
 
         response = self.client.get('/schemas.json')
         self.assertEqual(response.status_code, 200)

@@ -15,6 +15,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from guardian.shortcuts import get_groups_with_perms
 
 import requests
 
@@ -72,7 +73,7 @@ def propagate_kernel_artefacts(schema, family=None):
     Creates/updates artefacts based on the indicated Schema in Aether Kernel.
     '''
 
-    group_names = [group.name for group in get_groups_with_perms(project)]
+    group_names = [group.name for group in get_groups_with_perms(schema.project)]
     artefacts = {
         'name': schema.project.name,
         'family': family,

@@ -24,7 +24,12 @@ from django.urls import reverse
 
 from aether.common.auth.callbacks import auth_callback
 
-from . import CustomTestCase
+from . import (
+    CustomTestCase,
+    trigger_auth_callback,
+    default_auth_attributes,
+    default_auth_roles,
+)
 from ..kernel_utils import KernelPropagationError
 
 
@@ -37,7 +42,7 @@ class KernelViewsTests(CustomTestCase):
         email = 'test@example.com'
         password = 'testtest'
         self.user = get_user_model().objects.create_user(username, email, password)
-        auth_callback(None, self.user, {'roles': 'a'})
+        trigger_auth_callback(self.user)
         self.assertTrue(self.client.login(username=username, password=password))
 
     def tearDown(self):
@@ -49,7 +54,7 @@ class KernelViewsTests(CustomTestCase):
         response = self.client.patch(url_404)
         self.assertEqual(response.status_code, 404)
 
-        project = self.helper_create_project(group_names=['a'])
+        project = self.helper_create_project(group_names=default_auth_roles)
         url = reverse('project-propagate', kwargs={'pk': project.pk})
 
         with mock.patch('aether.odk.api.views.propagate_kernel_project',
@@ -69,7 +74,7 @@ class KernelViewsTests(CustomTestCase):
         response = self.client.patch(url_404)
         self.assertEqual(response.status_code, 404)
 
-        xform = self.helper_create_xform(group_names=['a'])
+        xform = self.helper_create_xform(group_names=default_auth_roles)
         url = reverse('xform-propagate', kwargs={'pk': xform.pk})
 
         with mock.patch('aether.odk.api.views.propagate_kernel_artefacts',

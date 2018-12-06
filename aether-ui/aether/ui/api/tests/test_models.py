@@ -406,7 +406,7 @@ class ModelsTests(TestCase):
             password='testtest',
         )
         roles = 'a-group'
-        auth_callback(None, user, {'roles': roles})
+        auth_callback('ui')(None, user, {'roles': roles})
         name = 'a-project-name'
         pipeline = Pipeline.objects.create(
             name='Pipeline test',

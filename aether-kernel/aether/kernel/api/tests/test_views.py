@@ -58,7 +58,7 @@ class ViewsTest(TestCase):
         self.assertTrue(self.client.login(username=username, password=password))
         # TODO: factor this out
         roles = 'a'
-        auth_callback(None, self.user, {'roles': roles})
+        auth_callback('kernel')(None, self.user, {'roles': roles})
 
         # Set up test model instances:
         self.project = models.Project.objects.create(
