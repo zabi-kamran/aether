@@ -29,6 +29,11 @@ from aether.common.auth.permissions import assign_permissions
 from aether.common.kernel import utils as kernel_utils
 
 from ..models import Pipeline, Contract
+from . import (
+    trigger_auth_callback,
+    default_auth_roles,
+)
+
 
 
 INPUT_SAMPLE = {
@@ -405,15 +410,14 @@ class ModelsTests(TestCase):
             username='test',
             password='testtest',
         )
-        roles = 'a-group'
-        auth_callback('ui')(None, user, {'roles': roles})
+        trigger_auth_callback(user)
         name = 'a-project-name'
         pipeline = Pipeline.objects.create(
             name='Pipeline test',
             input=INPUT_SAMPLE,
         )
         self.assert_has_no_permissions(user, pipeline)
-        assign_permissions([roles], pipeline)
+        assign_permissions(default_auth_roles, pipeline)
         self.assert_has_permissions(user, pipeline)
         contract = Contract.objects.create(
             entity_types=[ENTITY_SAMPLE],

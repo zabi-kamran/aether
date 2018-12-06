@@ -28,8 +28,14 @@ from django.test import TransactionTestCase, TestCase
 from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
-from . import (PIPELINE_EXAMPLE, PIPELINE_EXAMPLE_WITH_ERRORS,
-               CONTRACT_EXAMPLE, CONTRACT_EXAMPLE_WITH_ERRORS)
+from . import (
+    PIPELINE_EXAMPLE,
+    PIPELINE_EXAMPLE_WITH_ERRORS,
+    CONTRACT_EXAMPLE,
+    CONTRACT_EXAMPLE_WITH_ERRORS,
+    trigger_auth_callback,
+    default_auth_roles,
+)
 
 from ..models import Pipeline, Contract
 from .. import utils
@@ -68,7 +74,7 @@ class ViewsTest(TestCase):
         user = get_user_model().objects.create_user(username, email, password)
         self.user = user
         self.assertTrue(self.client.login(username=username, password=password))
-        auth_callback('ui')(None, user, {'roles': 'a'})
+        trigger_auth_callback(user)
 
         # save the list of project and schema ids created by the test
         # to remove them in the tearDown method
@@ -213,7 +219,7 @@ class ViewsTest(TestCase):
             name='Pipeline test',
             input=INPUT_SAMPLE
         )
-        assign_permissions(group_names=['a'], instance=pipeline)
+        assign_permissions(group_names=default_auth_roles, instance=pipeline)
         contract = Contract.objects.create(
             entity_types=[ENTITY_SAMPLE],
             mapping=[
@@ -223,7 +229,7 @@ class ViewsTest(TestCase):
             pipeline=pipeline,
             is_read_only=True,
         )
-        assign_permissions(group_names=['a'], instance=contract)
+        assign_permissions(group_names=default_auth_roles, instance=contract)
         url = reverse('pipeline-detail', kwargs={'pk': str(pipeline.pk)})
         INPUT_SAMPLE['weight'] = 45
         data = {
@@ -400,7 +406,7 @@ class ViewsTest(TestCase):
             },
             input={'test': {'name': 'myValue'}},
         )
-        assign_permissions(group_names=['a'], instance=pipeline)
+        assign_permissions(group_names=default_auth_roles, instance=pipeline)
         contract = Contract.objects.create(
             name='Contract Test',
             pipeline=pipeline,
@@ -417,7 +423,7 @@ class ViewsTest(TestCase):
                 {'source': 'test.name', 'destination': 'Test.name'},
             ],
         )
-        assign_permissions(group_names=['a'], instance=contract)
+        assign_permissions(group_names=default_auth_roles, instance=contract)
 
         pipeline_id = str(pipeline.id)
         contract_id = str(contract.id)
@@ -448,7 +454,7 @@ class ViewsTest(TestCase):
             input=INPUT_SAMPLE,
             schema=ENTITY_SAMPLE,
         )
-        assign_permissions(group_names=['a'], instance=pipeline)
+        assign_permissions(group_names=default_auth_roles, instance=pipeline)
         contract = Contract.objects.create(
             name='Contract Exception',
             pipeline=pipeline,
@@ -458,7 +464,7 @@ class ViewsTest(TestCase):
                 {'source': '$.surname', 'destination': 'Person.firstName'},
             ],
         )
-        assign_permissions(group_names=['a'], instance=contract)
+        assign_permissions(group_names=default_auth_roles, instance=contract)
 
         url = reverse('pipeline-publish', args=[str(pipeline.id)])
         with mock.patch('aether.ui.api.utils.publish_contract', side_effect={'error': 'test error'}) as m:
@@ -475,7 +481,7 @@ class ViewsTest(TestCase):
             name='Pipeline 2 Exception',
             input=INPUT_SAMPLE,
         )
-        assign_permissions(group_names=['a'], instance=pipeline)
+        assign_permissions(group_names=default_auth_roles, instance=pipeline)
         contract = Contract.objects.create(
             name='Contract Exception 2',
             pipeline=pipeline,
@@ -485,7 +491,7 @@ class ViewsTest(TestCase):
                 {'source': '$.surname', 'destination': 'Person.firstName'},
             ],
         )
-        assign_permissions(group_names=['a'], instance=contract)
+        assign_permissions(group_names=default_auth_roles, instance=contract)
 
         pipeline_id = str(pipeline.id)
         contract_id = str(contract.id)

@@ -16,6 +16,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
+from ..callbacks import ui_auth_callback
+
 PIPELINE_EXAMPLE = {
   'name': 'Pipeline Example',
   'schema': {
@@ -314,3 +316,21 @@ CONTRACT_EXAMPLE_WITH_ERRORS = {
     }
   ]
 }
+
+default_auth_roles = [
+    'org1:view',
+    'org1:add',
+    'org1:delete',
+    'org1:change',
+]
+
+
+default_auth_attributes = {
+    'roles': ','.join(default_auth_roles)
+}
+
+
+def trigger_auth_callback(user, attributes=None):
+    if not attributes:
+        attributes = default_auth_attributes
+    ui_auth_callback(sender=None, user=user, attributes=attributes)

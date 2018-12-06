@@ -24,4 +24,4 @@ class Config(AppConfig):
     verbose_name = 'Aether Kernel UI'
 
     def ready(self):
-        import aether.sync.api.callbacks
+        import aether.ui.api.callbacks

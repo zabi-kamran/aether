@@ -156,17 +156,6 @@ def validate_contract(contract):
         return (errors, [])
 
 
-def kernel_permissions_to_ui_permissions(permissions):
-    result = []
-    for kernel_permission in permissions:
-        print(kernel_permission)
-        organisation = kernel_permission.split(':')[0]
-        for ui_permission in ui_permissions:
-            group_name = f'{organisation}:{ui_permission}'
-            result.append(group_name)
-    return result
-
-
 def kernel_to_pipeline():
     '''
     Fetches all mappingsets in kernel and tranform them into pipelines,
@@ -191,9 +180,6 @@ def kernel_to_pipeline():
                 mappingset=mappingset_id,
             )
         groups_with_permissions = mappingset.get('groups_with_permissions', [])
-        result = kernel_permissions_to_ui_permissions(groups_with_permissions)
-        if result:
-            import ipdb; ipdb.set_trace()
         # organisations = [group.split(':')[0] for group in groups_with_permissions]
         # groups_with_permissions = [
         #     'org1:kernel:add_project',
