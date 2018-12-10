@@ -15,7 +15,6 @@ def auth_callback(app_name):  # pragma: nocover
                 group.user_set.add(user)
                 for model_name in model_names:
                     permission_codename = f'{permission_name}_{model_name}'
-                    print('permission:', permission_codename)
                     permission = Permission.objects.get(codename=permission_codename)
                     group.permissions.add(permission)
             token, _ = Token.objects.get_or_create(user=user)

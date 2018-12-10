@@ -31,7 +31,15 @@ from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
 
-from . import EXAMPLE_SCHEMA, EXAMPLE_SOURCE_DATA, EXAMPLE_SOURCE_DATA_ENTITY, EXAMPLE_MAPPING
+from . import (
+    EXAMPLE_SCHEMA,
+    EXAMPLE_SOURCE_DATA,
+    EXAMPLE_SOURCE_DATA_ENTITY,
+    EXAMPLE_MAPPING,
+    default_auth_attributes,
+    default_auth_roles,
+    trigger_auth_callback,
+)
 
 
 class ModelsTests(TransactionTestCase):
@@ -377,11 +385,10 @@ class ModelsTests(TransactionTestCase):
             username='test',
             password='testtest',
         )
-        roles = 'a-group'
-        auth_callback('kernel')(None, user, {'roles': roles})
+        trigger_auth_callback(user)
         project = models.Project.objects.create(name='a-project')
         self.assert_has_no_permissions(user, project)
-        assign_permissions([roles], project)
+        assign_permissions(default_auth_roles, project)
         self.assert_has_permissions(user, project)
         mappingset = models.MappingSet.objects.create(
             revision='a sample revision',

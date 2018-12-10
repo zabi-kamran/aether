@@ -41,6 +41,9 @@ from . import (
     SAMPLE_HOUSEHOLD_SCHEMA_DEFINITION,
     SAMPLE_LOCATION_DATA,
     SAMPLE_LOCATION_SCHEMA_DEFINITION,
+    default_auth_attributes,
+    default_auth_roles,
+    trigger_auth_callback,
 )
 
 
@@ -56,9 +59,7 @@ class ViewsTest(TestCase):
         password = 'testtest'
         self.user = get_user_model().objects.create_user(username, email, password)
         self.assertTrue(self.client.login(username=username, password=password))
-        # TODO: factor this out
-        roles = 'a'
-        auth_callback('kernel')(None, self.user, {'roles': roles})
+        trigger_auth_callback(self.user)
 
         # Set up test model instances:
         self.project = models.Project.objects.create(

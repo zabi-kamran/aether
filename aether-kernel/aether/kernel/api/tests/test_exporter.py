@@ -30,6 +30,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from aether.common.auth.callbacks import auth_callback
+from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
 
 from aether.kernel.api.entity_extractor import run_entity_extraction
@@ -43,6 +44,12 @@ from aether.kernel.api.exporter import (
     generate_file as generate,
     XLSX_CONTENT_TYPE,
     CSV_CONTENT_TYPE,
+)
+
+from . import (
+    default_auth_attributes,
+    default_auth_roles,
+    trigger_auth_callback,
 )
 
 
@@ -219,7 +226,6 @@ class ExporterTest(TestCase):
         self.assertEqual(get_label('x.y.z', labels), 'X / Y / Union')
         self.assertEqual(get_label('x.y.a.z', labels), 'X / Y / A / Z')
 
-from aether.kernel.api.tests.utils.generators import assign_permissions
 
 class ExporterViewsTest(TestCase):
 
@@ -230,8 +236,7 @@ class ExporterViewsTest(TestCase):
         self.user = get_user_model().objects.create_user(username, email, password)
         self.assertTrue(self.client.login(username=username, password=password))
 
-        roles = 'a'
-        auth_callback('kernel')(None, self.user, {'roles': roles})
+        trigger_auth_callback(self.user)
 
         with open(os.path.join(here, 'files/export.avsc'), 'rb') as infile:
             EXAMPLE_SCHEMA = json.load(infile)
@@ -242,7 +247,7 @@ class ExporterViewsTest(TestCase):
         project = models.Project.objects.create(
             name='project1',
         )
-        assign_permissions(group_names=['a'], instance=project)
+        assign_permissions(group_names=default_auth_roles, instance=project)
 
         artefacts_id = str(project.pk)
         upsert_project_with_avro_schemas(
@@ -252,7 +257,7 @@ class ExporterViewsTest(TestCase):
                 'name': 'export',
                 'definition': EXAMPLE_SCHEMA,
             }],
-            group_names=['a'],
+            group_names=default_auth_roles,
         )
 
         self.assertTrue(
@@ -262,7 +267,7 @@ class ExporterViewsTest(TestCase):
             payload=EXAMPLE_PAYLOAD,
             mappingset=models.MappingSet.objects.get(pk=artefacts_id),
         )
-        assign_permissions(group_names=['a'], instance=submission)
+        assign_permissions(group_names=default_auth_roles, instance=submission)
         # extract entities
         run_entity_extraction(submission)
         # TODO: remove this assert
@@ -431,7 +436,7 @@ class ExporterViewsTest(TestCase):
                 payload={'name': f'Person-{i}'},
                 mappingset=models.MappingSet.objects.first(),
             )
-            assign_permissions(group_names=['a'], instance=submission)
+            assign_permissions(group_names=default_auth_roles, instance=submission)
 
         response = self.client.post(reverse('submission-csv'), data=json.dumps({
             'paths': ['_id', '_rev'],

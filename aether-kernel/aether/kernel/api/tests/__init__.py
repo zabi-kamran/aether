@@ -15,6 +15,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+from ..callbacks import kernel_auth_callback
 
 EXAMPLE_MAPPING = {
     'entities': {
@@ -273,3 +274,22 @@ SAMPLE_HOUSEHOLD_DATA = {
     'id': 'bdc639fe-b142-4587-b2e9-4dc1a51f9a5c',
     'locationID': '00f3f1ae-abab-448b-b12f-f9c1839465ab',
 }
+
+
+default_auth_roles = [
+    'org1:view',
+    'org1:add',
+    'org1:delete',
+    'org1:change',
+]
+
+
+default_auth_attributes = {
+    'roles': ','.join(default_auth_roles)
+}
+
+
+def trigger_auth_callback(user, attributes=None):
+    if not attributes:
+        attributes = default_auth_attributes
+    kernel_auth_callback(sender=None, user=user, attributes=attributes)
