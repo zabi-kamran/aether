@@ -8,7 +8,7 @@ from guardian.shortcuts import get_perms_for_model
 from aether.common.auth.permissions import assign_permissions
 
 from ..models import Project, Schema
-from . import ApiTestCase, trigger_auth_callback, default_auth_roles
+from . import trigger_auth_callback, default_auth_roles
 
 
 class TestPermissions(TestCase):
@@ -32,7 +32,6 @@ class TestPermissions(TestCase):
             username='test',
             password='testtest',
         )
-        # import ipdb; ipdb.set_trace()
         trigger_auth_callback(user)
         name = 'a-project-name'
         id = uuid.uuid4()

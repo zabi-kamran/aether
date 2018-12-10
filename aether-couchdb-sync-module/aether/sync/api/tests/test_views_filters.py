@@ -19,11 +19,10 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
 from ..models import Project, Schema
-from . import ApiTestCase, trigger_auth_callback, default_auth_roles
+from . import default_auth_roles, trigger_auth_callback
 
 
 class FilterViewsTests(TestCase):

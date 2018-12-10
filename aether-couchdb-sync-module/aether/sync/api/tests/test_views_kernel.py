@@ -24,13 +24,13 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
 from ..kernel_utils import KernelPropagationError
 from ..models import Project, Schema
 
 from . import trigger_auth_callback, default_auth_roles
+
 
 class KernelViewsTests(TestCase):
 

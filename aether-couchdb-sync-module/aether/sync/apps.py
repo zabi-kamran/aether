@@ -27,8 +27,7 @@ class Config(AppConfig):
 
     def ready(self):
         # Register auth callback.
-        # TODO: coverage for this?
-        import aether.sync.api.callbacks
+        import aether.sync.api.callbacks  # noqa
         # schedule jobs
         scheduler = get_scheduler('default')
 

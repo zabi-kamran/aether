@@ -18,19 +18,12 @@
 
 import uuid
 
-from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
-from guardian.shortcuts import get_perms_for_model
-
-from aether.common.auth.callbacks import auth_callback
-from aether.common.auth.permissions import assign_permissions
-
 from ...couchdb import api
-from . import ApiTestCase, trigger_auth_callback, default_auth_roles
 from .. import couchdb_helpers
 from ..models import MobileUser, DeviceDB, Project, Schema
-
+from . import ApiTestCase
 
 
 class ModelsTests(ApiTestCase):

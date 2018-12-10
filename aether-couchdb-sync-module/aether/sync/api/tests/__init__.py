@@ -17,7 +17,7 @@
 # under the License.
 
 import re
-from django.test import TransactionTestCase, TestCase
+from django.test import TransactionTestCase
 
 from ..callbacks import sync_auth_callback
 from ...couchdb import api
