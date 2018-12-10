@@ -25,7 +25,7 @@ from django.shortcuts import get_object_or_404
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from guardian.shortcuts import get_objects_for_user
-from rest_framework import viewsets, permissions, status, versioning, generics
+from rest_framework import viewsets, permissions, status, versioning
 from rest_framework.response import Response
 from rest_framework.decorators import (
     action,
@@ -35,15 +35,11 @@ from rest_framework.decorators import (
 )
 from rest_framework.renderers import JSONRenderer
 
-from guardian.shortcuts import get_objects_for_user
-
 from .avro_tools import extract_jsonpaths_and_docs
 from .constants import LINKED_DATA_MAX_DEPTH
 from .entity_extractor import extract_create_entities
 from .exporter import ExporterViewSet
 from .mapping_validation import validate_mappings
-
-from rest_framework import permissions
 
 from aether.common.auth.permissions import (
     CreateWithPermissionsMixin,
@@ -56,11 +52,6 @@ from . import (
     project_artefacts,
     serializers,
 )
-
-
-# TODO: re-add this
-# from rest_framework_guardian import filters as filters_
-from guardian.shortcuts import assign_perm, get_objects_for_user, get_perms_for_model
 
 
 class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
@@ -164,7 +155,6 @@ class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
 
         # the group which the user belongs to needs to have
         # permission to modify the project
-        groups = request.query_params.get('groups')
         try:
             project = get_objects_for_user(
                 user=request.user,
@@ -267,7 +257,6 @@ class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
         '''
 
         data = request.data
-        group_names = data.get('group_names')
         results = project_artefacts.upsert_project_artefacts(
             action=data.get('action', 'upsert'),
             project_id=pk,
@@ -533,14 +522,14 @@ class SubmissionStatsMixin(object):
             # )
 
         result = get_objects_for_user(self.request.user, perms=[], klass=self.model) \
-                   .values('id', 'name', 'created') \
-                   .annotate(
-                       first_submission=Min('submissions__created'),
-                       last_submission=Max('submissions__created'),
-                       submissions_count=Count('submissions__id', distinct=True),
-                       attachments_count=Count('submissions__attachments__id', distinct=True),
-                       entities_count=entities_count,
-                   )
+                 .values('id', 'name', 'created') \
+                 .annotate(
+                     first_submission=Min('submissions__created'),
+                     last_submission=Max('submissions__created'),
+                     submissions_count=Count('submissions__id', distinct=True),
+                     attachments_count=Count('submissions__attachments__id', distinct=True),
+                     entities_count=entities_count,
+                 )
         return result
 
 

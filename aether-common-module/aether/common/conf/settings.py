@@ -283,13 +283,9 @@ if CAS_SERVER_URL:
     INSTALLED_APPS += [
         # CAS libraries
         'django_cas_ng',
-        # 'ums_client',
     ]
     AUTHENTICATION_BACKENDS += [
         'django_cas_ng.backends.CASBackend',
-    ]
-    MIDDLEWARE += [
-        'django_cas_ng.middleware.CASMiddleware',
     ]
     CAS_VERSION = 3
     CAS_LOGOUT_COMPLETELY = True

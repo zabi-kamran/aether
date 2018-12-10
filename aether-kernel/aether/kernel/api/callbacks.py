@@ -3,4 +3,3 @@ from aether.common.auth.callbacks import auth_callback
 
 kernel_auth_callback = auth_callback('kernel')
 cas_user_authenticated.connect(kernel_auth_callback)
-

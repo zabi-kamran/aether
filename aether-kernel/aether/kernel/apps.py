@@ -24,4 +24,5 @@ class Config(AppConfig):
     verbose_name = 'Aether Kernel'
 
     def ready(self):
-        import aether.kernel.api.callbacks
+        # Register django_cas_ng auth callback
+        import aether.kernel.api.callbacks  # noqa

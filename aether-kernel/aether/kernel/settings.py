@@ -31,32 +31,7 @@ ROOT_URLCONF = 'aether.kernel.urls'
 ADD_REVERSION_ADMIN = True
 
 INSTALLED_APPS += [
-    # 'django.contrib.admin',
-    # 'django.contrib.auth',
-    # 'django.contrib.contenttypes',
-    # 'django.contrib.messages',
-    # 'django.contrib.postgres',
-    # 'django.contrib.sessions',
-    # 'django.contrib.staticfiles',
-    # 'storages',
-
-    # # REST framework with auth token
-    # 'rest_framework',
-    # 'rest_framework.authtoken',
-
-    # # CORS checking
-    # 'corsheaders',
-
-    # # Monitoring
-    # 'django_prometheus',
-
-    # # aether apps
-    # 'aether.common',
-
-    # 'debug_toolbar',
-    # etc.
     'django_filters',
-    # 'django_cas_ng',
     'drf_yasg',
     'reversion',
     'reversion_compare',
@@ -66,10 +41,6 @@ INSTALLED_APPS += [
 MIGRATION_MODULES = {
     'kernel': 'aether.kernel.api.migrations'
 }
-
-MIDDLEWARE += [
-    'django_cas_ng.middleware.CASMiddleware',
-]
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
@@ -86,4 +57,3 @@ REST_FRAMEWORK['DEFAULT_FILTER_BACKENDS'] = [
 ]
 
 CSV_SEPARATOR = os.environ.get('CSV_SEPARATOR', ',')
-

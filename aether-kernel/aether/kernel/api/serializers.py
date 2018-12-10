@@ -239,15 +239,6 @@ class AttachmentSerializer(GroupsWithPermissionsMixin,
         model = models.Attachment
         fields = '__all__'
 
-from guardian.shortcuts import *
-
-class ProjectPKField(serializers.PrimaryKeyRelatedField):
-    def get_queryset(self):
-        user = self.context['request'].user
-        # queryset = models.Project.objects.filter(user=user)
-        objs = get_objects_for_user(user, perms=[], klass=models.Project)
-        # import ipdb; ipdb.set_trace()
-        return objs
 
 class SchemaSerializer(GroupsWithPermissionsMixin,
                        DynamicFieldsMixin,
@@ -262,7 +253,6 @@ class SchemaSerializer(GroupsWithPermissionsMixin,
         source='projectschemas',
         view_name='projectschema-list',
     )
-    # project = ProjectPKField()
 
     class Meta:
         model = models.Schema
