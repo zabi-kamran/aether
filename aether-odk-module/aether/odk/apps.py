@@ -24,4 +24,5 @@ class Config(AppConfig):
     verbose_name = 'Aether ODK'
 
     def ready(self):
-        import aether.odk.api.callbacks
+        # Register django_cas_ng auth callback
+        import aether.odk.api.callbacks  # noqa

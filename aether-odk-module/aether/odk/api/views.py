@@ -37,6 +37,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import StaticHTMLRenderer, TemplateHTMLRenderer
 from rest_framework.response import Response
 
+
 from aether.common.kernel.utils import (
     get_attachments_url,
     get_auth_header,
@@ -122,9 +123,6 @@ MSG_SUBMISSION_SUBMIT_SUCCESS_ID = _(
     'The submission with instance ID "{instance}" has ID "{id}" in Aether Kernel.'
 )
 
-
-# TODO: move to permissions
-from rest_framework.permissions import DjangoObjectPermissions  # pragma: nocover
 
 class ProjectViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     '''

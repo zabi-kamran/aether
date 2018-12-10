@@ -17,16 +17,13 @@
 # under the License.
 
 from django.urls import reverse
-from guardian.shortcuts import assign_perm
 from rest_framework import status
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
 from . import (
     CustomTestCase,
     trigger_auth_callback,
-    default_auth_attributes,
     default_auth_roles,
 )
 

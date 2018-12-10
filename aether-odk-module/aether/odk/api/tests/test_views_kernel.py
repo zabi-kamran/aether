@@ -22,12 +22,9 @@ import mock
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from aether.common.auth.callbacks import auth_callback
-
 from . import (
     CustomTestCase,
     trigger_auth_callback,
-    default_auth_attributes,
     default_auth_roles,
 )
 from ..kernel_utils import KernelPropagationError

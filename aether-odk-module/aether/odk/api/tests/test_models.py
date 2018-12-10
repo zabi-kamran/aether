@@ -23,13 +23,11 @@ from django.db import IntegrityError
 
 from guardian.shortcuts import get_perms_for_model
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
 from . import (
     CustomTestCase,
     trigger_auth_callback,
-    default_auth_attributes,
     default_auth_roles,
 )
 from ..models import Project, XForm, MediaFile

@@ -36,10 +36,6 @@ INSTALLED_APPS += [
     'aether.odk',
 ]
 
-MIDDLEWARE += [
-    'django_pdb.middleware.PdbMiddleware',
-]
-
 MIGRATION_MODULES = {
     'odk': 'aether.odk.api.migrations',
 }

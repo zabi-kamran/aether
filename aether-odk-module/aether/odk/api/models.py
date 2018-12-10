@@ -21,7 +21,6 @@ import uuid
 from hashlib import md5
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
