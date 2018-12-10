@@ -24,7 +24,6 @@ from django.test import TestCase
 
 from guardian.shortcuts import get_perms_for_model
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 from aether.common.kernel import utils as kernel_utils
 
@@ -33,7 +32,6 @@ from . import (
     trigger_auth_callback,
     default_auth_roles,
 )
-
 
 
 INPUT_SAMPLE = {
@@ -411,7 +409,6 @@ class ModelsTests(TestCase):
             password='testtest',
         )
         trigger_auth_callback(user)
-        name = 'a-project-name'
         pipeline = Pipeline.objects.create(
             name='Pipeline test',
             input=INPUT_SAMPLE,

@@ -23,9 +23,8 @@ import uuid
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.test import TransactionTestCase, TestCase
+from django.test import TestCase
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 
 from . import (
@@ -64,6 +63,7 @@ ENTITY_SAMPLE = {
         }
     ],
 }
+
 
 class ViewsTest(TestCase):
 
@@ -180,7 +180,6 @@ class ViewsTest(TestCase):
     def test__pipeline__and__contract__viewsets(self):
         url = reverse('pipeline-list')
         data = json.dumps({'name': 'Pipeline'})
-        import guardian.shortcuts as gs
         response = self.client.post(url, data=data, content_type='application/json')
         response_data = json.loads(response.content)
 
@@ -193,8 +192,6 @@ class ViewsTest(TestCase):
         data = json.dumps({'input': {'id': 1}})
         response = self.client.patch(url_patch, data=data, content_type='application/json')
         response_data = json.loads(response.content)
-        from aether.ui.api.models import Pipeline
-        pipelines = Pipeline.objects.all()
         self.assertEqual(response_data['name'], 'Pipeline', 'Preserves name')
         self.assertEqual(response_data['input'], {'id': 1}, 'Sets input')
 

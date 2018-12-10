@@ -21,12 +21,9 @@ from django.shortcuts import get_object_or_404
 
 from http import HTTPStatus
 
-from rest_framework import viewsets
 from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
-from rest_framework import viewsets, permissions, status, versioning
-
-from guardian.shortcuts import assign_perm, get_objects_for_user, get_perms_for_model
+from rest_framework import viewsets
 
 from aether.common.kernel.utils import get_kernel_server_url
 from aether.common.auth.permissions import (

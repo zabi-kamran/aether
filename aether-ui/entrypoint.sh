@@ -138,8 +138,7 @@ setup () {
 }
 
 test_lint () {
-    echo "FIXME: linting"
-    # flake8 ./aether --config=./conf/extras/flake8.cfg
+    flake8 ./aether --config=./conf/extras/flake8.cfg
 }
 
 test_coverage () {

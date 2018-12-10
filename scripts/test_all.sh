@@ -22,7 +22,7 @@ set -Eeuo pipefail
 
 echo "_____________________________________________ TESTING"
 
-containers=( kernel )
+containers=( kernel client ui odk couchdb-sync )
 
 for container in "${containers[@]}"
 do
