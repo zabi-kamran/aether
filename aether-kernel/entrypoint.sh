@@ -185,7 +185,7 @@ case "$1" in
     test )
         echo "DEBUG=$DEBUG"
         setup
-        # test_flake8
+        test_flake8
         test_coverage "${@:2}"
     ;;
 

@@ -20,14 +20,12 @@ import uuid
 
 from django.db.utils import IntegrityError
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from django.test import TransactionTestCase
 
-from guardian.shortcuts import assign_perm, get_perms_for_model  # pragma: nocover
+from guardian.shortcuts import get_perms_for_model
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
 
@@ -36,7 +34,6 @@ from . import (
     EXAMPLE_SOURCE_DATA,
     EXAMPLE_SOURCE_DATA_ENTITY,
     EXAMPLE_MAPPING,
-    default_auth_attributes,
     default_auth_roles,
     trigger_auth_callback,
 )

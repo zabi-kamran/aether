@@ -521,15 +521,18 @@ class SubmissionStatsMixin(object):
             #     filter=entities_filter,
             # )
 
-        result = get_objects_for_user(self.request.user, perms=[], klass=self.model) \
-                 .values('id', 'name', 'created') \
-                 .annotate(
-                     first_submission=Min('submissions__created'),
-                     last_submission=Max('submissions__created'),
-                     submissions_count=Count('submissions__id', distinct=True),
-                     attachments_count=Count('submissions__attachments__id', distinct=True),
-                     entities_count=entities_count,
-                 )
+        result = get_objects_for_user(
+            self.request.user,
+            perms='view_project',
+            klass=models.Project,
+            accept_global_perms=False,
+        ).values('id', 'name', 'created').annotate(
+            first_submission=Min('submissions__created'),
+            last_submission=Max('submissions__created'),
+            submissions_count=Count('submissions__id', distinct=True),
+            attachments_count=Count('submissions__attachments__id', distinct=True),
+            entities_count=entities_count,
+        )
         return result
 
 

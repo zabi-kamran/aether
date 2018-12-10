@@ -22,13 +22,6 @@ import uuid
 from datetime import datetime
 from hashlib import md5
 
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import models
-from django.db.utils import IntegrityError
-
-from guardian.shortcuts import assign_perm, get_perms, get_groups_with_perms
-from django.contrib.auth.models import User, Group
-
 from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError

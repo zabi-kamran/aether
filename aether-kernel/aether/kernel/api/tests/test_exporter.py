@@ -29,7 +29,6 @@ from django.http import FileResponse
 from django.test import TestCase
 from django.urls import reverse
 
-from aether.common.auth.callbacks import auth_callback
 from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
 
@@ -47,7 +46,6 @@ from aether.kernel.api.exporter import (
 )
 
 from . import (
-    default_auth_attributes,
     default_auth_roles,
     trigger_auth_callback,
 )

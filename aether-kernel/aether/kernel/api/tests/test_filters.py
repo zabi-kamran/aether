@@ -25,12 +25,10 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from aether.common.auth.callbacks import auth_callback
 from aether.kernel.api import models
 from aether.kernel.api.tests.utils.generators import generate_project
 
 from . import (
-    default_auth_attributes,
     default_auth_roles,
     trigger_auth_callback,
 )

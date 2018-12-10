@@ -19,8 +19,6 @@
 import random
 
 from autofixture import AutoFixture
-from django.contrib.auth.models import Group, Permission
-from guardian.shortcuts import assign_perm, get_perms_for_model
 
 from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
@@ -149,11 +147,11 @@ def generate_project(
             ),
         ).create_one()
         # create a random input based on the schema
-        
+
         if not mappingset.input and mappingset.schema:
             mappingset.input = random_avro(mappingset.schema)
             mappingset.save()
-        mapping = AutoFixture(
+        AutoFixture(
             model=models.Mapping,
             field_values=get_field_values(
                 default=dict(

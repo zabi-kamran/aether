@@ -29,7 +29,6 @@ from rest_framework import status
 
 from guardian.shortcuts import assign_perm
 
-from aether.common.auth.callbacks import auth_callback
 from aether.kernel.api import models
 from aether.kernel.api.entity_extractor import run_entity_extraction
 
@@ -41,8 +40,6 @@ from . import (
     SAMPLE_HOUSEHOLD_SCHEMA_DEFINITION,
     SAMPLE_LOCATION_DATA,
     SAMPLE_LOCATION_SCHEMA_DEFINITION,
-    default_auth_attributes,
-    default_auth_roles,
     trigger_auth_callback,
 )
 
