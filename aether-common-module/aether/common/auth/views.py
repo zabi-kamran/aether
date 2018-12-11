@@ -57,6 +57,7 @@ def obtain_auth_token(request):
                 username=username,
                 password=user_model.make_random_password(length=100),
             )
+            # TODO: call out to ums and create roles for user, if any
 
         # gets the user token
         token, _ = Token.objects.get_or_create(user=user)

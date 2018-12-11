@@ -391,6 +391,8 @@ class ProjectSchemaViewSet(CreateWithPermissionsMixin, viewsets.ModelViewSet):
     filter_class = filters.ProjectSchemaFilter
     permission_classes = (CustomObjectPermissions,)
 
+
+
     @action(detail=True, methods=['get'])
     def skeleton(self, request, pk=None, *args, **kwargs):
         '''
