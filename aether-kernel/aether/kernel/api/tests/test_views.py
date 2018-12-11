@@ -27,8 +27,7 @@ from django.urls import reverse
 
 from rest_framework import status
 
-from guardian.shortcuts import assign_perm
-
+from aether.common.auth.permissions import assign_permissions
 from aether.kernel.api import models
 from aether.kernel.api.entity_extractor import run_entity_extraction
 
@@ -41,6 +40,7 @@ from . import (
     SAMPLE_LOCATION_DATA,
     SAMPLE_LOCATION_SCHEMA_DEFINITION,
     trigger_auth_callback,
+    default_auth_roles,
 )
 
 
@@ -63,12 +63,7 @@ class ViewsTest(TestCase):
             revision='rev 1',
             name='a project name',
         )
-        # TODO: use shortcuts
-        for group in self.user.groups.all():
-            assign_perm('view_project', group, self.project)
-            assign_perm('add_project', group, self.project)
-            assign_perm('change_project', group, self.project)
-            assign_perm('delete_project', group, self.project)
+        assign_permissions(default_auth_roles, self.project)
 
         self.schema = models.Schema.objects.create(
             name='schema1',
@@ -76,20 +71,14 @@ class ViewsTest(TestCase):
             family='Person',
             definition=EXAMPLE_SCHEMA,
         )
-        assign_perm('view_schema', group, self.schema)
-        assign_perm('add_schema', group, self.schema)
-        assign_perm('change_schema', group, self.schema)
-        assign_perm('delete_schema', group, self.schema)
+        assign_permissions(default_auth_roles, self.schema)
 
         self.projectschema = models.ProjectSchema.objects.create(
             name='a project schema name',
             project=self.project,
             schema=self.schema,
         )
-        assign_perm('view_projectschema', group, self.projectschema)
-        assign_perm('add_projectschema', group, self.projectschema)
-        assign_perm('change_projectschema', group, self.projectschema)
-        assign_perm('delete_projectschema', group, self.projectschema)
+        assign_permissions(default_auth_roles, self.projectschema)
         # update the fake value with a real one
         mapping_definition = dict(EXAMPLE_MAPPING)
         mapping_definition['entities']['Person'] = str(self.projectschema.pk)
@@ -100,43 +89,25 @@ class ViewsTest(TestCase):
             schema={},
             project=self.project,
         )
-        for group in self.user.groups.all():
-            assign_perm('view_mappingset', group, self.mappingset)
-            assign_perm('add_mappingset', group, self.mappingset)
-            assign_perm('change_mappingset', group, self.mappingset)
-            assign_perm('delete_mappingset', group, self.mappingset)
+        assign_permissions(default_auth_roles, self.mappingset)
 
         self.mapping = models.Mapping.objects.create(
             name='mapping1',
             definition=mapping_definition,
             mappingset=self.mappingset,
         )
-        for group in self.user.groups.all():
-            assign_perm('view_mapping', group, self.mapping)
-            assign_perm('add_mapping', group, self.mapping)
-            assign_perm('change_mapping', group, self.mapping)
-            assign_perm('delete_mapping', group, self.mapping)
+        assign_permissions(default_auth_roles, self.mapping)
 
         self.submission = models.Submission.objects.create(
             payload=EXAMPLE_SOURCE_DATA,
             mappingset=self.mappingset,
             project=self.project,
         )
-        for group in self.user.groups.all():
-            assign_perm('view_submission', group, self.submission)
-            assign_perm('add_submission', group, self.submission)
-            assign_perm('change_submission', group, self.submission)
-            assign_perm('delete_submission', group, self.submission)
+        assign_permissions(default_auth_roles, self.submission)
 
         # extract entities
         run_entity_extraction(self.submission)
         self.entity = models.Entity.objects.first()
-        for entity in models.Entity.objects.all():
-            for group in self.user.groups.all():
-                assign_perm('view_entity', group, entity)
-                assign_perm('add_entity', group, entity)
-                assign_perm('change_entity', group, entity)
-                assign_perm('delete_entity', group, entity)
 
     def tearDown(self):
         self.project.delete()
@@ -192,7 +163,6 @@ class ViewsTest(TestCase):
                     'payload': EXAMPLE_SOURCE_DATA,
                     'mappingset': str(self.mappingset.pk),
                 })
-                print('-------------------')
 
         submissions_count = models.Submission \
                                   .objects \
@@ -259,7 +229,7 @@ class ViewsTest(TestCase):
 
     def test_mapping_set_stats_view(self):
         url = reverse('mappingsets_stats-detail', kwargs={'pk': self.mappingset.pk})
-        print('------------------------', url)
+        print('---------------', self.mappingset.pk)
         response = self.client.get(url, format='json')
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         json = response.json()
@@ -478,7 +448,7 @@ class ViewsTest(TestCase):
             url,
             data=json.dumps({
                 'name': f'Project {project_id}',
-                'group_names': ['a'],
+                'group_names': default_auth_roles,
             }),
             content_type='application/json',
         ).json()
@@ -505,8 +475,7 @@ class ViewsTest(TestCase):
         # /projects/<id>/artefacts/.
         self.client.logout()
         self.assertTrue(self.client.login(username='test', password='testtest'))
-        # roles = 'a'
-        # auth_callback(None, self.user, {'roles': roles})
+        trigger_auth_callback(self.user)
         url = reverse(
             'project-detail',
             kwargs={'pk': response.get('project')}

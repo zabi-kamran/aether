@@ -523,9 +523,8 @@ class SubmissionStatsMixin(object):
 
         result = get_objects_for_user(
             self.request.user,
-            perms='view_project',
-            klass=models.Project,
-            accept_global_perms=False,
+            perms=[],
+            klass=self.model,
         ).values('id', 'name', 'created').annotate(
             first_submission=Min('submissions__created'),
             last_submission=Max('submissions__created'),
@@ -534,7 +533,6 @@ class SubmissionStatsMixin(object):
             entities_count=entities_count,
         )
         return result
-
 
 class ProjectStatsViewSet(SubmissionStatsMixin, viewsets.ReadOnlyModelViewSet):
     model = models.Project  # required by SubmissionStatsMixin
