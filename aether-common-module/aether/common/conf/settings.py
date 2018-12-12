@@ -278,6 +278,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AETHER_MODULE_NAME = 'common'
+
 CAS_SERVER_URL = os.environ.get('CAS_SERVER_URL')
 if CAS_SERVER_URL:
     INSTALLED_APPS += [
@@ -289,6 +291,7 @@ if CAS_SERVER_URL:
     ]
     CAS_VERSION = 3
     CAS_LOGOUT_COMPLETELY = True
+    CAS_PROJECT_ADMIN_TOKEN = os.environ['CAS_PROJECT_ADMIN_TOKEN']
     HOSTNAME = os.environ['HOSTNAME']
 
 else:

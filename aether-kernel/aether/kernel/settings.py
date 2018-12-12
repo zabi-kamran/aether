@@ -38,8 +38,10 @@ INSTALLED_APPS += [
     'aether.kernel',
 ]
 
+AETHER_MODULE_NAME = 'kernel'
+
 MIGRATION_MODULES = {
-    'kernel': 'aether.kernel.api.migrations'
+    AETHER_MODULE_NAME: 'aether.kernel.api.migrations'
 }
 
 AUTHENTICATION_BACKENDS = [

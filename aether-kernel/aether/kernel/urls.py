@@ -27,7 +27,6 @@ API_PREFIX = '^(?P<version>v1)'
 urlpatterns = generate_urlpatterns(token=True) + [
     url(r'^', include('aether.kernel.api.urls')),
     url(f'{API_PREFIX}/', include('aether.kernel.api.urls')),
-
     url(f'{API_PREFIX}/schema/',
         view=AetherSchemaView.without_ui(cache_timeout=0),
         name='api_schema'),
