@@ -32,9 +32,6 @@ def register_user(user, role_names):
                 codename=permission_codename
             )
             group.permissions.add(permission)
-    token, _ = Token.objects.get_or_create(user=user)
-    token.save()
-    user.save()
 
 
 def auth_callback(app_name):  # pragma: nocover
@@ -44,4 +41,6 @@ def auth_callback(app_name):  # pragma: nocover
         if attributes.get('roles'):
             role_names = attributes.get('roles', '').split(',')
             register_user(user, role_names)
+        token, _ = Token.objects.get_or_create(user=user)
+        user.save()  # TODO: redundant?
     return inner

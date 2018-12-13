@@ -31,9 +31,14 @@ from rest_framework.permissions import (
 )
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
+import requests
 
 from django.apps import apps
+from django.conf import settings
 from django.contrib.auth.models import Group, Permission
+
+from aether.common.auth.callbacks import register_user
+
 
 @api_view(['POST'])
 @renderer_classes([JSONRenderer])
@@ -59,19 +64,16 @@ def obtain_auth_token(request):
                 username=username,
                 password=user_model.make_random_password(length=100),
             )
-        from django.conf import settings
         if settings.CAS_SERVER_URL:
-            import requests
             headers = {'Authorization': f'Token {settings.CAS_PROJECT_ADMIN_TOKEN}'}
             hostname = request.get_host().split(':')[0]
             res = requests.get(
-                f'{CAS_SERVER_URL}get-groups-for-user/{hostname}/{user.username}/',
-                headers=headers
+                f'{settings.CAS_SERVER_URL}/get-groups-for-user/{hostname}/{user.username}/',
+                headers=headers,
             )
             res.raise_for_status()
             role_names = res.json().get('result', [])
-            app_config = apps.get_app_config(settings.AETHER_MODULE_NAME)
-            model_names = [model.__name__.lower() for model in app_config.get_models()]
+            register_user(user, role_names)
 
         # gets the user token
         token, _ = Token.objects.get_or_create(user=user)
