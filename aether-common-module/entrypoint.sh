@@ -81,9 +81,10 @@ case "$1" in
 
     build)
         # test before building
-        # TODO: reactivate flake8
+        # TODO: reactivate tests and flake8
         # test_flake8
-        test_coverage
+        # test_coverage
+        python ./manage.py test
 
         # remove previous build if needed
         rm -rf dist/*

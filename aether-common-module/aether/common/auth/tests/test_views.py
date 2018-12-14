@@ -73,7 +73,7 @@ class ViewsTest(TestCase):
         token = response.json()['token']
         self.assertNotEqual(token, None)
         request_mock.assert_called_with(
-            f'{settings.CAS_SERVER_URL}/get-groups-for-user/testserver/username-for-token/',
+            f'{settings.CAS_SERVER_URL}/get-groups-for-user/{settings.CAS_CLIENTSERVICE_NAME}/username-for-token/',
             headers={'Authorization': f'Token {settings.CAS_PROJECT_ADMIN_TOKEN}'}
         )
         self.assertEqual(
@@ -93,7 +93,8 @@ class ViewsTest(TestCase):
         self.assertEqual(Group.objects.count(), 1)
         self.assertEqual(Group.objects.first().name, 'org-1:view')
 
-    def test_obtain_auth_token__raises_exception(self):
+    @mock.patch('requests.get', return_value=RequestsMock({'result': ['org-1:view']}))
+    def test_obtain_auth_token__raises_exception(self, _):
         username = 'admin'
         email = 'admin@example.com'
         password = 'adminadmin'

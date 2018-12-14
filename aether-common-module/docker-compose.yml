@@ -11,8 +11,9 @@ services:
 
     environment:
       TESTING: "true"
+      CAS_CLIENTSERVICE_NAME: test-clientservice
       CAS_SERVER_URL: http://example.com
-      CAS_PROJECT_ADMIN_TOKEN: 'abc'
+      CAS_PROJECT_ADMIN_TOKEN: abc
 
       # required environment variables
       DJANGO_SECRET_KEY: django_secret_key
