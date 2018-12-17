@@ -68,7 +68,7 @@ def obtain_auth_token(request):
             headers = {'Authorization': f'Token {settings.CAS_PROJECT_ADMIN_TOKEN}'}
             clientservice_name = settings.CAS_CLIENTSERVICE_NAME
             res = requests.get(
-                f'{settings.CAS_SERVER_URL}/get-groups-for-user/{clientservice_name}/{user.username}/',
+                f'{settings.CAS_SERVER_URL}/get-roles/{clientservice_name}/{user.username}/',
                 headers=headers,
             )
             res.raise_for_status()

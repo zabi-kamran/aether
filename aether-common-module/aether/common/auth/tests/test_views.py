@@ -73,7 +73,7 @@ class ViewsTest(TestCase):
         token = response.json()['token']
         self.assertNotEqual(token, None)
         request_mock.assert_called_with(
-            f'{settings.CAS_SERVER_URL}/get-groups-for-user/{settings.CAS_CLIENTSERVICE_NAME}/username-for-token/',
+            f'{settings.CAS_SERVER_URL}/get-roles/{settings.CAS_CLIENTSERVICE_NAME}/username-for-token/',
             headers={'Authorization': f'Token {settings.CAS_PROJECT_ADMIN_TOKEN}'}
         )
         self.assertEqual(
