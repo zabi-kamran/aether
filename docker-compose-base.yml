@@ -85,7 +85,7 @@ services:
     environment:
       # Uncomment this line to enable single sign on if you use CAS
       # CAS_SERVER_URL: http://ums-dev.ehealthafrica.org/
-      CAS_SERVER_URL: http://192.168.178.89:8080
+      CAS_SERVER_URL: http://aether-ums
       CAS_CLIENTSERVICE_NAME: clientservice-kernel-local
       CAS_PROJECT_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
       # CAS_SERVER_URL: http://192.168.0.7:8080/
@@ -399,3 +399,37 @@ services:
     ports:
       - "5005:5005"
     command: start
+
+  # ---------------------------------
+  # UMS container
+  # ---------------------------------
+  
+  aether-ums-base:
+    image: ums_ums:latest
+    volumes:
+      - static_content:/var/www/static/:rw
+      - logs:/var/log/ums
+    environment:
+      PYTHONUNBUFFERED: 1
+      STATIC_ROOT: /var/www/static/
+      DEBUG: "True"
+      RDS_HOSTNAME: "db"
+      RDS_USERNAME: "postgres"
+      RDS_PASSWORD: "cosmoveda"
+      RDS_PORT: "5432"
+      RDS_DB_NAME: "ums"
+      SECRET_KEY: "secret"
+    command: start_dev
+    ports:
+      - "8080:8080"
+
+  aether-ums-init-base:
+    image: postgres:9.6-alpine
+    volumes:
+      - ./aether-ums:/code/setup/
+    environment:
+      PGHOST: db
+      PGUSER: postgres
+      PGPORT: 5432
+      DB_NAME: ums
+    command: "/code/setup/setup.sh"

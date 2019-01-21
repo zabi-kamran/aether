@@ -22,6 +22,10 @@ volumes:
   database_data:
     external:
       name: aether_database_data
+  static_content:
+    driver: local
+  logs:
+    driver: local
 
 
 services:
@@ -163,5 +167,26 @@ services:
     extends:
       file: ./docker-compose-base.yml
       service: nginx-base
+    networks:
+      - internal
+
+  # ---------------------------------
+  # UMS containers
+  # ---------------------------------
+
+  aether-ums:
+    extends:
+      file: ./docker-compose-base.yml
+      service: aether-ums-base
+    depends_on:
+      - db
+      - aether-ums-init
+    networks:
+      - internal
+
+  aether-ums-init:
+    extends:
+      file: ./docker-compose-base.yml
+      service: aether-ums-init-base
     networks:
       - internal
