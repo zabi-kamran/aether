@@ -84,11 +84,9 @@ services:
     tty: true
     environment:
       # Uncomment this line to enable single sign on if you use CAS
-      # CAS_SERVER_URL: http://ums-dev.ehealthafrica.org/
-      CAS_SERVER_URL: http://aether-ums
-      CAS_CLIENTSERVICE_NAME: clientservice-kernel-local
+      CAS_SERVER_URL: http://ums.aether.local:8080/
+      CAS_CLIENTSERVICE_NAME: kernel-local
       CAS_PROJECT_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
-      # CAS_SERVER_URL: http://192.168.0.7:8080/
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"
@@ -140,13 +138,9 @@ services:
     tty: true
     environment:
       # Uncomment this line to enable single sign on if you use CAS
-      # CAS_SERVER_URL: https://your.cas.server
-      # CAS_SERVER_URL: http://192.168.178.89:8080/
-      # CAS_SERVER_URL: http://192.168.0.7:8080/
-      CAS_SERVER_URL: http://192.168.178.89:8080
-      CAS_CLIENTSERVICE_NAME: clientservice-odk-local
+      CAS_SERVER_URL: http://ums.aether.local:8080/
+      CAS_CLIENTSERVICE_NAME: odk-local
       CAS_PROJECT_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
-      # CAS_SERVER_URL: http://192.168.0.7:8080/
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"
@@ -201,12 +195,9 @@ services:
     tty: true
     environment: &sync-environment
       # Uncomment this line to enable single sign on if you use CAS
-      # CAS_SERVER_URL: https://your.cas.server
-      # CAS_SERVER_URL: http://192.168.178.89:8080/
-      CAS_SERVER_URL: http://192.168.0.7:8080
-      CAS_CLIENTSERVICE_NAME: clientservice-couchdb-sync-local
+      CAS_SERVER_URL: http://ums.aether.local:8080/
+      CAS_CLIENTSERVICE_NAME: couchdb-sync-local
       CAS_PROJECT_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
-      # CAS_SERVER_URL: http://192.168.0.7:8080/
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"
@@ -272,10 +263,13 @@ services:
       # Uncomment this line to enable single sign on if you use CAS
       # CAS_SERVER_URL: https://your.cas.server
       # CAS_SERVER_URL: http://192.168.178.89:8080/
-      CAS_SERVER_URL: http://192.168.0.7:8080
-      CAS_CLIENTSERVICE_NAME: clientservice-ui-local
-      CAS_PROJECT_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
+      # CAS_SERVER_URL: http://192.168.0.7:8080
+      # CAS_CLIENTSERVICE_NAME: clientservice-ui-local
+      # CAS_PROJECT_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
       # CAS_SERVER_URL: http://192.168.0.7:8080/
+      CAS_SERVER_URL: http://ums.aether.local:8080/
+      CAS_CLIENTSERVICE_NAME: ui-local
+      CAS_PROJECT_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
 
       CSRF_COOKIE_DOMAIN: .aether.local
       DEBUG: "true"
@@ -405,23 +399,26 @@ services:
   # ---------------------------------
   
   aether-ums-base:
-    image: ums_ums:latest
-    volumes:
-      - static_content:/var/www/static/:rw
-      - logs:/var/log/ums
+    command: start_dev
     environment:
-      PYTHONUNBUFFERED: 1
-      STATIC_ROOT: /var/www/static/
+      UMS_ADMIN_USERNAME: admin
+      UMS_ADMIN_PASSWORD: secret
+      UMS_ADMIN_TOKEN: df63b04f88100ba9f621e3f288d0616fe78b5cb9
       DEBUG: "True"
+      PYTHONUNBUFFERED: 1
+      RDS_DB_NAME: "ums"
       RDS_HOSTNAME: "db"
-      RDS_USERNAME: "postgres"
       RDS_PASSWORD: "cosmoveda"
       RDS_PORT: "5432"
-      RDS_DB_NAME: "ums"
+      RDS_USERNAME: "postgres"
       SECRET_KEY: "secret"
-    command: start_dev
+      STATIC_ROOT: /var/www/static/
+    image: ums_ums:latest
     ports:
       - "8080:8080"
+    volumes:
+      - logs:/var/log/ums
+      - static_content:/var/www/static/:rw
 
   aether-ums-init-base:
     image: postgres:9.6-alpine

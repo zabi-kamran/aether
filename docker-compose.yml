@@ -182,7 +182,9 @@ services:
       - db
       - aether-ums-init
     networks:
-      - internal
+      internal:
+        aliases:
+          - ums.aether.local
 
   aether-ums-init:
     extends:

@@ -1,13 +1,14 @@
 import requests
+import os
 
 from requests.auth import HTTPBasicAuth
 
-projects = [
-    {
-        'name': 'kernel-local',
+def make_project(project_name, hostname):
+    return {
+        'name': project_name,
         'auth_methods': ['ums'],
         'clientservice': {
-            'name': 'a',
+            'name': f'{project_name}-clientservice',
             'hostname': 'kernel.aether.local',
         },
         'groups': [
@@ -27,12 +28,15 @@ projects = [
                 ]
             },
         ]
-    },
+    }
+
+projects = [
+    make_project('kernel-local', 'kernel.aether.local'),
     {
         'name': 'odk-local',
         'auth_methods': ['ums'],
         'clientservice': {
-            'name': 'a',
+            'name': 'odk-aether-local',
             'hostname': 'odk.aether.local',
         },
         'groups': [
@@ -58,6 +62,7 @@ projects = [
 users = [
     {
         'username': 'tester',
+        'password': 'testing',
         'groups': [
             {
                 'project': 'kernel-local',
@@ -74,8 +79,8 @@ users = [
 base_url = 'http://0.0.0.0:8080'
 
 auth = HTTPBasicAuth(
-    username='asdf',
-    password='asdfasdfasdf',
+    username=os.environ['UMS_ADMIN_USERNAME'],
+    password=os.environ['UMS_ADMIN_PASSWORD'],
 )
 
 for project in projects:
