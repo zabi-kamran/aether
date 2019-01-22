@@ -28,6 +28,8 @@ from aether.common.conf.settings import INSTALLED_APPS, STATIC_ROOT
 # UI Configuration
 # ------------------------------------------------------------------------------
 
+AETHER_MODULE_NAME = 'ui'
+
 ROOT_URLCONF = 'aether.ui.urls'
 
 # Javascript/CSS Files:

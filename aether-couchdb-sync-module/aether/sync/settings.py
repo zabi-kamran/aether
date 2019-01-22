@@ -27,6 +27,7 @@ from aether.common.conf.settings import INSTALLED_APPS
 
 # Sync Configuration
 # ------------------------------------------------------------------------------
+AETHER_MODULE_NAME = 'sync'
 
 ROOT_URLCONF = 'aether.sync.urls'
 

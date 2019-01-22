@@ -26,6 +26,8 @@ from aether.common.conf.settings import INSTALLED_APPS
 # ODK Configuration
 # ------------------------------------------------------------------------------
 
+AETHER_MODULE_NAME = 'odk'
+
 ROOT_URLCONF = 'aether.odk.urls'
 
 # Allow cors for all origins but only for the submission endpoint

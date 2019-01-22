@@ -15,19 +15,26 @@ additional_permissions = {
 
 def register_user(user, role_names):
     app_name = settings.AETHER_MODULE_NAME
+    print('app_name', app_name)
     app_config = apps.get_app_config(app_name)
+    print('app_config', app_config)
     model_names = [model.__name__.lower() for model in app_config.get_models()]
+    print('model_name', model_names)
     for role_name in role_names:
         organisation, permission_name = role_name.split(':')
+        print('org', organisation)
+        print('permission_name', permission_name)
         group, _ = Group.objects.get_or_create(name=role_name)
         group.user_set.add(user)
         for model_name in model_names:
             permission_codename = f'{permission_name}_{model_name}'
+            print('permission_codename', permission_codename)
             permission = Permission.objects.get(
                 codename=permission_codename
             )
             group.permissions.add(permission)
         for permission_codename in additional_permissions.get(app_name, []):
+            print('additional_permission', permission_codename)
             permission = Permission.objects.get(
                 codename=permission_codename
             )
