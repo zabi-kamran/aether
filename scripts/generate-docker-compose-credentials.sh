@@ -121,4 +121,11 @@ UI_DB_PASSWORD=$(gen_random_string)
 PRODUCER_ADMIN_USER=admin
 PRODUCER_ADMIN_PW=$(gen_random_string)
 
+# ------------------------------------------------------------------
+# UMS
+# ==================================================================
+UMS_ADMIN_USERNAME=admin
+UMS_ADMIN_PASSWORD=$(gen_random_string)
+UMS_ADMIN_TOKEN=$(gen_random_string)
+
 EOF

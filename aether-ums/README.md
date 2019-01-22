@@ -19,19 +19,23 @@ in the aether repo.
 Now we can start the aether environment as usual:
 
 ```bash
+./scripts/generate-docker-compose-credentials.sh > .env
+dcp up -d db
 docker-compose up
 ```
 
-Once this is running, create a superuser in ums:
+For the following commands, you need to have both `requests` and `dotenv` installed.
+To install them, do:
 
-```bash
-docker-compose run aether-ums manage createsuperuser
+```
+pip install requests
+pip install dotenv
 ```
 
 To create example projects for Aether, run:
 
 ```bash
-UMS_ADMIN_USERNAME=<username> UMS_ADMIN_PASSWORD=<password> python3 ./scripts/ums/create_projects.py
+python3 ./scripts/ums/create_projects.py
 ```
 
 `UMS_ADMIN_USERNAME` and `UMS_ADMIN_PASSWORD` should match the corresponding environment variables in `docker-compose-base.yml`.
@@ -39,10 +43,9 @@ UMS_ADMIN_USERNAME=<username> UMS_ADMIN_PASSWORD=<password> python3 ./scripts/um
 To create example users for Aether, run:
 
 ```bash
-UMS_ADMIN_USERNAME=<username> UMS_ADMIN_PASSWORD=<password> python3 ./scripts/ums/create_projects.py
+python3 ./scripts/ums/create_projects.py
 ```
-
-We don't currently have any mechanism to automatically set the token etc. etc.
 
 At this point, you should be able to log in to any Aether module using the credentials in `./scripts/ums/create_projects.py`.
 
+TODO: list examples.

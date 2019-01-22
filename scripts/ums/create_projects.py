@@ -1,7 +1,10 @@
-import requests
+import dotenv
 import os
+import requests
 
 from requests.auth import HTTPBasicAuth
+
+dotenv.load_dotenv('.env')
 
 def make_project(project_name, hostname):
     return {
