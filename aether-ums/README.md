@@ -13,8 +13,12 @@ git checkout feat/rest-api
 docker-compose build ums
 ```
 
-This will build an image `ums_ums` which is referenced in the docker-compose file
-in the aether repo.
+This will build an image `ums_ums` which is referenced in the docker-compose file in the aether repo.
+
+Add the following to `/etc/hosts`:
+```
+127.0.0.1    ums.aether.local
+```
 
 Now we can start the aether environment as usual:
 
