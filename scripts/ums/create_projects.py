@@ -25,6 +25,21 @@ def make_project(project_name, hostname):
                 ]
             },
             {
+                'name': 'uploader2',
+                'roles': [
+                    {'name': 'org-2:view'},
+                    {'name': 'org-2:add'},
+                    {'name': 'org-2:change'},
+                    {'name': 'org-2:delete'},
+                ]
+            },
+            {
+                'name': 'analyst',
+                'roles': [
+                    {'name': 'org-1:view'},
+                ]
+            },
+            {
                 'name': 'analyst',
                 'roles': [
                     {'name': 'org-1:view'},

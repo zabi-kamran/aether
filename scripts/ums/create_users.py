@@ -29,6 +29,28 @@ users = [
             },
         ]
     },
+    {
+        'username': 'tester2',
+        'password': 'testing',
+        'groups': [
+            {
+                'project': 'kernel-local',
+                'group_name': 'uploader2',
+            },
+            {
+                'project': 'odk-local',
+                'group_name': 'uploader2',
+            },
+            {
+                'project': 'couchdb-sync-local',
+                'group_name': 'uploader2',
+            },
+            {
+                'project': 'ui-local',
+                'group_name': 'uploader2',
+            },
+        ]
+    },
 ]
 
 base_url = 'http://0.0.0.0:8080'

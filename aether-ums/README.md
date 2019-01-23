@@ -48,4 +48,14 @@ python3 ./scripts/ums/create_projects.py
 
 At this point, you should be able to log in to any Aether module using the credentials in `./scripts/ums/create_projects.py`.
 
-TODO: list examples.
+### Things to check
+- a user can log in to all modules
+- resources created in odk, couchdb-sync and ui are propagated with the correct permissions
+- `obtain_auth_token` triggers permission assignment. Example: when gather requests that a token is generated for a user, the relevant permissions are also created and assigned. Check the `groups_with_permissions` field in e.g. a kernel project to verify
+
+Docker compose
+Script contents
+What is created in UMS?
+What happens when a user logs in to kernel?
+What happens when a user logs in to gather?
+What happens when a user creates a resource in ui?
