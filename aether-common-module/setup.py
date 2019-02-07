@@ -42,14 +42,18 @@ setup(
 
     python_requires='>=3.6',
     install_requires=[
+    install_requires=[
         'django<2',
         'django-cors-headers',
         'django-debug-toolbar',
         'django-prometheus',
         'django-storages',
         'djangorestframework',
+        'jwcrypto',
         'psycopg2-binary',
+        'pyjwt',
         'python-json-logger',
+        'python-keycloak',
         'requests',
     ],
 
